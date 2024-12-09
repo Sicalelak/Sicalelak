@@ -10,6 +10,7 @@ local AimbotEnabled = false
 local SmoothSpeed = 0.3
 
 -- FOV THIGNY (CONFIGEURE IT IF YOU WANT000)))
+local FOVCircle = Drawing.new("Circle")
 FOVCircle.Color = Color3.fromRGB(255, 255, 255) 
 FOVCircle.Thickness = 2
 FOVCircle.Radius = 100 
