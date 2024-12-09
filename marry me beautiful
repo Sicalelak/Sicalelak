@@ -9,7 +9,7 @@ local SmoothSpeed = 0.3
 
 
 local FOVCircle = Drawing.new("Circle")
-FOVCircle.Color = Color3.fromRGB(255, 255, 255) -- White circle
+FOVCircle.Color = Color3.fromRGB(255, 255, 255) 
 FOVCircle.Thickness = 2
 FOVCircle.Radius = 100 
 FOVCircle.Transparency = 1
