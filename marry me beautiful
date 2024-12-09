@@ -1,3 +1,6 @@
+--theconfigbaby
+local config = AimbotConfig
+
 -- Variables
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -5,10 +8,7 @@ local Camera = workspace.CurrentCamera
 local TargetModelName = "Ball" -- The name of the model
 local TargetPartName = "BallPart" -- The name of the part inside the model
 local AimbotEnabled = false
-local SmoothSpeed = config.SmoothSpeed -- Smooth camera movement (adjustable)
-
---theconfigbaby
-local config = AimbotConfig
+local SmoothSpeed = config.SmoothSpeed
 
 -- FOV Circle
 local FOVCircle = Drawing.new("Circle")
