@@ -1,8 +1,28 @@
+-- Variables
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Camera = workspace.CurrentCamera
+local TargetModelName = "Ball" -- The name of the model
+local TargetPartName = "BallPart" -- The name of the part inside the model
+local AimbotEnabled = false
+local SmoothSpeed = config.SmoothSpeed -- Smooth camera movement (adjustable)
 
--- marry me
+--theconfigbaby
+local config = AimbotConfig
+
+-- FOV Circle
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Color = config.FOVCircle.Color
+FOVCircle.Thickness = config.FOVCircle.Thickness
+FOVCircle.Radius = config.FOVCircle.Radius
+FOVCircle.Transparency = config.FOVCircle.Transparency
+FOVCircle.Visible = config.FOVCircle.Visible
+FOVCircle.Filled = config.FOVCircle.Filled
+
+-- Function to find the closest valid target within the FOV
 local function FindClosestTarget()
     local closestTarget = nil
-    local closestDistance = math.huge 
+    local closestDistance = math.huge -- Start with a very large distance
     local mouseLocation = UserInputService:GetMouseLocation()
 
     for _, model in ipairs(workspace:GetChildren()) do
@@ -24,7 +44,7 @@ local function FindClosestTarget()
     return closestTarget
 end
 
---iliveyou
+-- Smoothly move the camera towards the target
 local function SmoothAimAt(target)
     if target then
         local currentCFrame = Camera.CFrame
@@ -33,7 +53,7 @@ local function SmoothAimAt(target)
     end
 end
 
-
+-- Input handling
 UserInputService.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton2 then
         AimbotEnabled = true
@@ -46,13 +66,13 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
-
+-- Update FOV Circle position
 RunService.RenderStepped:Connect(function()
     local mouseLocation = UserInputService:GetMouseLocation()
     FOVCircle.Position = Vector2.new(mouseLocation.X, mouseLocation.Y)
 end)
 
--- Mbe mu girl pls
+-- Main loop
 RunService.RenderStepped:Connect(function()
     if AimbotEnabled then
         local closestTarget = FindClosestTarget()
