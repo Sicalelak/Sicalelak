@@ -1,18 +1,14 @@
---varibles
+-- Variables
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
-local TargetModelName = "Ball" 
-local TargetPartName = "BallPart" 
+local TargetModelName = "Ball"
+local TargetPartName = "BallPart"
 local AimbotEnabled = false
-
-
---im about to bust (v1)
-local FOVCircle = Drawing.new("Circle")
 
 local cachedTarget = nil
 
---im about to bust (v2)
+-- Get target part
 local function GetTargetPart()
     local model = workspace:FindFirstChild(TargetModelName)
     if model and model:IsA("Model") then
@@ -24,7 +20,7 @@ local function GetTargetPart()
     return nil
 end
 
---im about to bust (v3)
+-- Check if target is within FOV
 local function IsWithinFOV(targetPosition)
     local mouseLocation = UserInputService:GetMouseLocation()
     local screenPosition, onScreen = Camera:WorldToViewportPoint(targetPosition)
@@ -36,7 +32,7 @@ local function IsWithinFOV(targetPosition)
     return false
 end
 
-
+-- Smooth aiming
 local function SmoothAimAt(target)
     if target then
         local currentCFrame = Camera.CFrame
@@ -45,7 +41,7 @@ local function SmoothAimAt(target)
     end
 end
 
-
+-- Enable/Disable aimbot
 UserInputService.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton2 then
         AimbotEnabled = true
@@ -55,17 +51,17 @@ end)
 UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton2 then
         AimbotEnabled = false
-        cachedTarget = nil 
+        cachedTarget = nil
     end
 end)
 
-
+-- Update FOVCircle position
 RunService.RenderStepped:Connect(function()
     local mouseLocation = UserInputService:GetMouseLocation()
     FOVCircle.Position = Vector2.new(mouseLocation.X, mouseLocation.Y)
 end)
 
---nooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
+-- Main aimbot logic
 RunService.RenderStepped:Connect(function()
     if AimbotEnabled then
         if not cachedTarget or not cachedTarget:IsDescendantOf(workspace) then
@@ -80,8 +76,7 @@ RunService.RenderStepped:Connect(function()
             if IsWithinFOV(cachedTarget.Position) then
                 SmoothAimAt(cachedTarget)
             end
-            FOVCircle.Radius = originalRadius 
+            FOVCircle.Radius = originalRadius
         end
     end
 end)
---works (barely)
