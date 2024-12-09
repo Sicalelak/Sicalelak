@@ -1,28 +1,26 @@
---theconfigbaby
-local config = AimbotConfig or {}
-
--- Variables
+--osadoasdosdo
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
-local TargetModelName = "Ball" -- The name of the model
-local TargetPartName = "BallPart" -- The name of the part inside the model
+local TargetModelName = "Ball" 
+local TargetPartName = "BallPart" 
 local AimbotEnabled = false
-local SmoothSpeed = config.SmoothSpeed
 
--- FOV Circle
-local FOVCircle = Drawing.new("Circle")
-FOVCircle.Color = config.FOVCircle.Color
-FOVCircle.Thickness = config.FOVCircle.Thickness
-FOVCircle.Radius = config.FOVCircle.Radius
-FOVCircle.Transparency = config.FOVCircle.Transparency
-FOVCircle.Visible = config.FOVCircle.Visible
-FOVCircle.Filled = config.FOVCircle.Filled
+--congure ot
+local SmoothSpeed = 0.3
 
--- Function to find the closest valid target within the FOV
+-- FOV THIGNY (CONFIGEURE IT IF YOU WANT000)))
+FOVCircle.Color = Color3.fromRGB(255, 255, 255) 
+FOVCircle.Thickness = 2
+FOVCircle.Radius = 100 
+FOVCircle.Transparency = 1
+FOVCircle.Visible = true
+FOVCircle.Filled = false
+
+
 local function FindClosestTarget()
     local closestTarget = nil
-    local closestDistance = math.huge -- Start with a very large distance
+    local closestDistance = math.huge 
     local mouseLocation = UserInputService:GetMouseLocation()
 
     for _, model in ipairs(workspace:GetChildren()) do
@@ -40,11 +38,10 @@ local function FindClosestTarget()
             end
         end
     end
-
     return closestTarget
 end
 
--- Smoothly move the camera towards the target
+-- MOVE THAREGT PSLSS
 local function SmoothAimAt(target)
     if target then
         local currentCFrame = Camera.CFrame
@@ -53,7 +50,7 @@ local function SmoothAimAt(target)
     end
 end
 
--- Input handling
+
 UserInputService.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton2 then
         AimbotEnabled = true
@@ -66,13 +63,13 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- Update FOV Circle position
+
 RunService.RenderStepped:Connect(function()
     local mouseLocation = UserInputService:GetMouseLocation()
     FOVCircle.Position = Vector2.new(mouseLocation.X, mouseLocation.Y)
 end)
 
--- Main loop
+
 RunService.RenderStepped:Connect(function()
     if AimbotEnabled then
         local closestTarget = FindClosestTarget()
