@@ -1,5 +1,5 @@
 --theconfigbaby
-local config = AimbotConfig
+local config = AimbotConfig or {}
 
 -- Variables
 local UserInputService = game:GetService("UserInputService")
