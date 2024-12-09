@@ -1,22 +1,21 @@
---osadoasdosdo
+
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
 local TargetModelName = "Ball" 
 local TargetPartName = "BallPart" 
 local AimbotEnabled = false
+local SmoothSpeed = 0.3 
 
---congure ot
-local SmoothSpeed = 0.3
 
--- FOV THIGNY (CONFIGEURE IT IF YOU WANT000)))
 local FOVCircle = Drawing.new("Circle")
-FOVCircle.Color = Color3.fromRGB(255, 255, 255) 
+FOVCircle.Color = Color3.fromRGB(255, 255, 255) -- White circle
 FOVCircle.Thickness = 2
 FOVCircle.Radius = 100 
 FOVCircle.Transparency = 1
 FOVCircle.Visible = true
 FOVCircle.Filled = false
+
 
 
 local function FindClosestTarget()
@@ -42,7 +41,6 @@ local function FindClosestTarget()
     return closestTarget
 end
 
--- MOVE THAREGT PSLSS
 local function SmoothAimAt(target)
     if target then
         local currentCFrame = Camera.CFrame
@@ -50,7 +48,6 @@ local function SmoothAimAt(target)
         Camera.CFrame = currentCFrame:Lerp(targetCFrame, SmoothSpeed)
     end
 end
-
 
 UserInputService.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton2 then
@@ -64,12 +61,10 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
-
 RunService.RenderStepped:Connect(function()
     local mouseLocation = UserInputService:GetMouseLocation()
     FOVCircle.Position = Vector2.new(mouseLocation.X, mouseLocation.Y)
 end)
-
 
 RunService.RenderStepped:Connect(function()
     if AimbotEnabled then
