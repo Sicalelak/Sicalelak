@@ -1,38 +1,30 @@
--- Variables
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-local Camera = workspace.CurrentCamera
-local TargetModelName = "Ball"
-local TargetPartName = "BallPart"
-local AimbotEnabled = false
 
-local cachedTarget = nil
+-- marry me
+local function FindClosestTarget()
+    local closestTarget = nil
+    local closestDistance = math.huge 
+    local mouseLocation = UserInputService:GetMouseLocation()
 
--- Get target part
-local function GetTargetPart()
-    local model = workspace:FindFirstChild(TargetModelName)
-    if model and model:IsA("Model") then
-        local part = model:FindFirstChild(TargetPartName)
-        if part and part:IsA("BasePart") then
-            return part
+    for _, model in ipairs(workspace:GetChildren()) do
+        if model.Name == TargetModelName and model:IsA("Model") then
+            local part = model:FindFirstChild(TargetPartName)
+            if part and part:IsA("BasePart") then
+                local screenPosition, onScreen = Camera:WorldToViewportPoint(part.Position)
+                if onScreen then
+                    local distance = (Vector2.new(screenPosition.X, screenPosition.Y) - mouseLocation).Magnitude
+                    if distance <= FOVCircle.Radius and distance < closestDistance then
+                        closestTarget = part
+                        closestDistance = distance
+                    end
+                end
+            end
         end
     end
-    return nil
+
+    return closestTarget
 end
 
--- Check if target is within FOV
-local function IsWithinFOV(targetPosition)
-    local mouseLocation = UserInputService:GetMouseLocation()
-    local screenPosition, onScreen = Camera:WorldToViewportPoint(targetPosition)
-
-    if onScreen then
-        local distance = (Vector2.new(screenPosition.X, screenPosition.Y) - mouseLocation).Magnitude
-        return distance <= FOVCircle.Radius
-    end
-    return false
-end
-
--- Smooth aiming
+--iliveyou
 local function SmoothAimAt(target)
     if target then
         local currentCFrame = Camera.CFrame
@@ -41,7 +33,7 @@ local function SmoothAimAt(target)
     end
 end
 
--- Enable/Disable aimbot
+
 UserInputService.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton2 then
         AimbotEnabled = true
@@ -51,32 +43,21 @@ end)
 UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton2 then
         AimbotEnabled = false
-        cachedTarget = nil
     end
 end)
 
--- Update FOVCircle position
+
 RunService.RenderStepped:Connect(function()
     local mouseLocation = UserInputService:GetMouseLocation()
     FOVCircle.Position = Vector2.new(mouseLocation.X, mouseLocation.Y)
 end)
 
--- Main aimbot logic
+-- Mbe mu girl pls
 RunService.RenderStepped:Connect(function()
     if AimbotEnabled then
-        if not cachedTarget or not cachedTarget:IsDescendantOf(workspace) then
-            cachedTarget = GetTargetPart()
-        end
-
-        if cachedTarget and IsWithinFOV(cachedTarget.Position) then
-            SmoothAimAt(cachedTarget)
-        elseif cachedTarget then
-            local originalRadius = FOVCircle.Radius
-            FOVCircle.Radius = FOVCircle.Radius + 20
-            if IsWithinFOV(cachedTarget.Position) then
-                SmoothAimAt(cachedTarget)
-            end
-            FOVCircle.Radius = originalRadius
+        local closestTarget = FindClosestTarget()
+        if closestTarget then
+            SmoothAimAt(closestTarget)
         end
     end
 end)
