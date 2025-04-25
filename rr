@@ -871,53 +871,39 @@ function Library:CreateWindow(title, logoImage)
 			-- Slider drag functionality
 			local dragging = false
 						
+			-- Use InputBegan for frames that don't have MouseButton1Down
 			SliderButton.MouseButton1Down:Connect(function()
 				dragging = true
 			end)
 
-			SliderFrame.MouseButton1Down:Connect(function(input)
-				dragging = true
-				local value, percent = CalculateValue(input.Position.X)
-				UpdateSlider(value, percent)
+			SliderFrame.InputBegan:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.MouseButton1 then
+					dragging = true
+					local value, percent = CalculateValue(input.Position.X)
+					UpdateSlider(value, percent)
+				end
 			end)
 
-			SliderFill.MouseButton1Down:Connect(function(input)
-				dragging = true
-				local value, percent = CalculateValue(input.Position.X)
-				UpdateSlider(value, percent)
+			SliderFill.InputBegan:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.MouseButton1 then
+					dragging = true
+					local value, percent = CalculateValue(input.Position.X)
+					UpdateSlider(value, percent)
+				end
 			end)
 
-			-- Create a connection for global input ended
-			local inputEndedConnection
+			UserInputService.InputEnded:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.MouseButton1 then
+					dragging = false
+				end
+			end)
 
-			-- Create a connection for global input changed
-			local inputChangedConnection
-
-			-- Function to set up connections when dragging starts
-			local function setupConnections()
-				-- Remove existing connections if they exist
-				if inputEndedConnection then inputEndedConnection:Disconnect() end
-				if inputChangedConnection then inputChangedConnection:Disconnect() end
-				
-				-- Setup new connections
-				inputEndedConnection = UserInputService.InputEnded:Connect(function(input)
-					if input.UserInputType == Enum.UserInputType.MouseButton1 then
-						dragging = false
-					end
-				end)
-				
-				inputChangedConnection = UserInputService.InputChanged:Connect(function(input)
-					if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-						local value, percent = CalculateValue(input.Position.X)
-						UpdateSlider(value, percent)
-					end
-				end)
-			end
-
-			-- Connect the setup function to MouseButton1Down events
-			SliderButton.MouseButton1Down:Connect(setupConnections)
-			SliderFrame.MouseButton1Down:Connect(setupConnections)
-			SliderFill.MouseButton1Down:Connect(setupConnections)
+			UserInputService.InputChanged:Connect(function(input)
+				if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+					local value, percent = CalculateValue(input.Position.X)
+					UpdateSlider(value, percent)
+				end
+			end)
             
             -- TextBox input handling
             SliderValue.FocusLost:Connect(function(enterPressed)
