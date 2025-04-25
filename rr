@@ -1,0 +1,2218 @@
+-- UI Library with Configs, Animations and Advanced Features
+-- Enhanced version with all requested features
+-- Accent color: RGB(15, 98, 184)
+
+-- Services
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local HttpService = game:GetService("HttpService")
+local LocalPlayer = Players.LocalPlayer
+
+-- Create localized variables ahead of time to prevent reference issues
+local UILibrary = {}
+local TabSystem = {}
+local ConfigSystem = {}
+local ElementSystem = {}
+local AnimationSystem = {}
+local DragSystem = {}
+
+-- Forward declare references which will be assigned later
+local MainGUI, UIHolder, LeftSideBar, Tabs, ContentFrame, Notification
+
+-- Constants
+local ACCENT_COLOR = Color3.fromRGB(15, 98, 184) -- Main accent color
+local BACKGROUND_COLOR = Color3.fromRGB(40, 40, 45) -- Background color
+local HOVER_DARKEN_AMOUNT = 0.1 -- How much darker elements get when hovered
+local NOTIFICATION_DURATION = 1.5 -- Seconds for notification to show
+local CONFIG_FOLDER_NAME = "UIConfigs" -- Folder name for configs
+local DEFAULT_CONFIG_NAME = "DefaultConfig" -- Default config name
+
+-- Make sure the GUI exists before we continue
+-- This is the main fix: create the GUI if it doesn't exist
+local function setupGUI()
+    -- Check if MainGUI exists in PlayerGui
+    local playerGui = LocalPlayer:WaitForChild("PlayerGui")
+    local mainGUI = playerGui:FindFirstChild("MainGUI")
+    
+    if not mainGUI then
+        -- Create the MainGUI
+        mainGUI = Instance.new("ScreenGui")
+        mainGUI.Name = "MainGUI"
+        mainGUI.ResetOnSpawn = false
+        mainGUI.Parent = playerGui
+        
+        -- Create the UIHolder
+        local uiHolder = Instance.new("Frame")
+        uiHolder.Name = "UIHolder"
+        uiHolder.Size = UDim2.new(0, 800, 0, 500)
+        uiHolder.Position = UDim2.new(0.5, -400, 0.5, -250)
+        uiHolder.BackgroundColor3 = BACKGROUND_COLOR
+        uiHolder.BorderSizePixel = 0
+        uiHolder.Parent = mainGUI
+        
+        -- Create UICorner for rounded corners
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 6)
+        corner.Parent = uiHolder
+        
+        -- Create LeftSideBar
+        local leftSideBar = Instance.new("Frame")
+        leftSideBar.Name = "LeftSideBar"
+        leftSideBar.Size = UDim2.new(0, 200, 1, 0)
+        leftSideBar.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+        leftSideBar.BorderSizePixel = 0
+        leftSideBar.Parent = uiHolder
+        
+        -- Create corner for sidebar
+        local sidebarCorner = Instance.new("UICorner")
+        sidebarCorner.CornerRadius = UDim.new(0, 6)
+        sidebarCorner.Parent = leftSideBar
+        
+        -- Create Tabs container
+        local tabsContainer = Instance.new("Frame")
+        tabsContainer.Name = "Tabs"
+        tabsContainer.Size = UDim2.new(1, 0, 1, 0)
+        tabsContainer.BackgroundTransparency = 1
+        tabsContainer.Parent = leftSideBar
+        
+        -- Create Tabs inside the container
+        local tabs = Instance.new("Frame")
+        tabs.Name = "Tabs"
+        tabs.Size = UDim2.new(1, 0, 1, 0)
+        tabs.BackgroundTransparency = 1
+        tabs.Parent = tabsContainer
+        
+        -- Add UI List Layout to tabs
+        local listLayout = Instance.new("UIListLayout")
+        listLayout.Padding = UDim.new(0, 5)
+        listLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+        listLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+        listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        listLayout.Parent = tabs
+        
+        -- Add padding
+        local padding = Instance.new("UIPadding")
+        padding.PaddingTop = UDim.new(0, 10)
+        padding.Parent = tabs
+        
+        -- Create Home tab
+        local homeTab = Instance.new("Frame")
+        homeTab.Name = "HomeTab"
+        homeTab.Size = UDim2.new(0.9, 0, 0, 40)
+        homeTab.BackgroundTransparency = 1
+        homeTab.LayoutOrder = 1
+        homeTab.Parent = tabs
+        
+        local homeTabBtn = Instance.new("TextButton")
+        homeTabBtn.Name = "HomeTabBtn"
+        homeTabBtn.Size = UDim2.new(1, 0, 1, 0)
+        homeTabBtn.BackgroundTransparency = 0.9
+        homeTabBtn.Text = "Home"
+        homeTabBtn.Font = Enum.Font.SourceSansBold
+        homeTabBtn.TextSize = 18
+        homeTabBtn.TextColor3 = Color3.new(1, 1, 1)
+        homeTabBtn.Parent = homeTab
+        
+        local homeTabCorner = Instance.new("UICorner")
+        homeTabCorner.CornerRadius = UDim.new(0, 4)
+        homeTabCorner.Parent = homeTabBtn
+        
+        -- Create Settings tab
+        local settingsTab = Instance.new("Frame")
+        settingsTab.Name = "SettingsTab"
+        settingsTab.Size = UDim2.new(0.9, 0, 0, 40)
+        settingsTab.BackgroundTransparency = 1
+        settingsTab.LayoutOrder = 2
+        settingsTab.Parent = tabs
+        
+        local settingsTabBtn = Instance.new("TextButton")
+        settingsTabBtn.Name = "SettingsTabBtn"
+        settingsTabBtn.Size = UDim2.new(1, 0, 1, 0)
+        settingsTabBtn.BackgroundTransparency = 0.9
+        settingsTabBtn.Text = "Settings"
+        settingsTabBtn.Font = Enum.Font.SourceSansBold
+        settingsTabBtn.TextSize = 18
+        settingsTabBtn.TextColor3 = Color3.new(1, 1, 1)
+        settingsTabBtn.Parent = settingsTab
+        
+        local settingsTabCorner = Instance.new("UICorner")
+        settingsTabCorner.CornerRadius = UDim.new(0, 4)
+        settingsTabCorner.Parent = settingsTabBtn
+        
+        -- Create ContentFrame
+        local contentFrame = Instance.new("Frame")
+        contentFrame.Name = "ContentFrame"
+        contentFrame.Size = UDim2.new(1, -220, 1, -20)
+        contentFrame.Position = UDim2.new(0, 210, 0, 10)
+        contentFrame.BackgroundTransparency = 1
+        contentFrame.Parent = uiHolder
+        
+        -- Create notification frame
+        local notification = Instance.new("Frame")
+        notification.Name = "Notification"
+        notification.Size = UDim2.new(0, 300, 0, 60)
+        notification.Position = UDim2.new(1, 10, 1, 10) -- Off-screen initially
+        notification.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+        notification.BorderSizePixel = 0
+        notification.Visible = false
+        notification.Parent = mainGUI
+        
+        local notifCorner = Instance.new("UICorner")
+        notifCorner.CornerRadius = UDim.new(0, 6)
+        notifCorner.Parent = notification
+        
+        local colorLine = Instance.new("Frame")
+        colorLine.Name = "ColorLineEDITABLEINSCRIPT"
+        colorLine.Size = UDim2.new(0, 4, 1, -4)
+        colorLine.Position = UDim2.new(0, 0, 0, 2)
+        colorLine.BackgroundColor3 = ACCENT_COLOR
+        colorLine.BorderSizePixel = 0
+        colorLine.Parent = notification
+        
+        local colorLineCorner = Instance.new("UICorner")
+        colorLineCorner.CornerRadius = UDim.new(0, 4)
+        colorLineCorner.Parent = colorLine
+        
+        local notifTitle = Instance.new("TextLabel")
+        notifTitle.Name = "Title"
+        notifTitle.Size = UDim2.new(1, -20, 0, 25)
+        notifTitle.Position = UDim2.new(0, 15, 0, 0)
+        notifTitle.BackgroundTransparency = 1
+        notifTitle.Font = Enum.Font.SourceSansBold
+        notifTitle.TextSize = 18
+        notifTitle.TextColor3 = Color3.new(1, 1, 1)
+        notifTitle.TextXAlignment = Enum.TextXAlignment.Left
+        notifTitle.Text = "Notification"
+        notifTitle.Parent = notification
+        
+        local notifText = Instance.new("TextLabel")
+        notifText.Name = "TextLabel"
+        notifText.Size = UDim2.new(1, -20, 0, 25)
+        notifText.Position = UDim2.new(0, 15, 0, 25)
+        notifText.BackgroundTransparency = 1
+        notifText.Font = Enum.Font.SourceSans
+        notifText.TextSize = 16
+        notifText.TextColor3 = Color3.new(0.8, 0.8, 0.8)
+        notifText.TextXAlignment = Enum.TextXAlignment.Left
+        notifText.Text = "This is a notification"
+        notifText.Parent = notification
+        
+        -- Create template elements for cloning later
+        
+        -- Toggle template
+        local toggleTemplate = Instance.new("Frame")
+        toggleTemplate.Name = "ToggleOn"
+        toggleTemplate.Size = UDim2.new(1, 0, 0, 50)
+        toggleTemplate.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+        toggleTemplate.BorderSizePixel = 0
+        toggleTemplate.Parent = contentFrame
+        
+        local toggleTemplateCorner = Instance.new("UICorner")
+        toggleTemplateCorner.CornerRadius = UDim.new(0, 4)
+        toggleTemplateCorner.Parent = toggleTemplate
+        
+        local toggleLabel = Instance.new("TextLabel")
+        toggleLabel.Name = "ToggleLabel"
+        toggleLabel.Size = UDim2.new(0, 200, 0, 50)
+        toggleLabel.Position = UDim2.new(0, 10, 0, 0)
+        toggleLabel.BackgroundTransparency = 1
+        toggleLabel.Font = Enum.Font.SourceSans
+        toggleLabel.TextSize = 18
+        toggleLabel.TextColor3 = Color3.new(1, 1, 1)
+        toggleLabel.TextXAlignment = Enum.TextXAlignment.Left
+        toggleLabel.Text = "Toggle Option"
+        toggleLabel.Parent = toggleTemplate
+        
+        local toggle = Instance.new("Frame")
+        toggle.Name = "Toggle"
+        toggle.Size = UDim2.new(0, 60, 0, 30)
+        toggle.Position = UDim2.new(1, -70, 0.5, -15)
+        toggle.BackgroundColor3 = ACCENT_COLOR
+        toggle.BorderSizePixel = 0
+        toggle.Parent = toggleTemplate
+        
+        local toggleCorner = Instance.new("UICorner")
+        toggleCorner.CornerRadius = UDim.new(1, 0)
+        toggleCorner.Parent = toggle
+        
+        local toggleCircle = Instance.new("Frame")
+        toggleCircle.Name = "Toggle-Circle"
+        toggleCircle.Size = UDim2.new(0, 20, 0, 20)
+        toggleCircle.Position = UDim2.new(0.565, 0, 0.188, 0)
+        toggleCircle.BackgroundColor3 = Color3.new(1, 1, 1)
+        toggleCircle.BorderSizePixel = 0
+        toggleCircle.Parent = toggle
+        
+        local circleCorner = Instance.new("UICorner")
+        circleCorner.CornerRadius = UDim.new(1, 0)
+        circleCorner.Parent = toggleCircle
+        
+        -- Slider template
+        local sliderTemplate = Instance.new("Frame")
+        sliderTemplate.Name = "Slider"
+        sliderTemplate.Size = UDim2.new(1, 0, 0, 60)
+        sliderTemplate.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+        sliderTemplate.BorderSizePixel = 0
+        sliderTemplate.Parent = contentFrame
+        
+        local sliderTemplateCorner = Instance.new("UICorner")
+        sliderTemplateCorner.CornerRadius = UDim.new(0, 4)
+        sliderTemplateCorner.Parent = sliderTemplate
+        
+        local sliderLabel = Instance.new("TextLabel")
+        sliderLabel.Name = "SlideLabel"
+        sliderLabel.Size = UDim2.new(0, 200, 0, 30)
+        sliderLabel.Position = UDim2.new(0, 10, 0, 0)
+        sliderLabel.BackgroundTransparency = 1
+        sliderLabel.Font = Enum.Font.SourceSans
+        sliderLabel.TextSize = 18
+        sliderLabel.TextColor3 = Color3.new(1, 1, 1)
+        sliderLabel.TextXAlignment = Enum.TextXAlignment.Left
+        sliderLabel.Text = "Slider Option"
+        sliderLabel.Parent = sliderTemplate
+        
+        local sliderFrame = Instance.new("Frame")
+        sliderFrame.Name = "Slider"
+        sliderFrame.Size = UDim2.new(1, -20, 0, 20)
+        sliderFrame.Position = UDim2.new(0, 10, 0, 30)
+        sliderFrame.BackgroundTransparency = 1
+        sliderFrame.Parent = sliderTemplate
+        
+        local sliderBar = Instance.new("Frame")
+        sliderBar.Name = "Slider"
+        sliderBar.Size = UDim2.new(1, 0, 0, 4)
+        sliderBar.Position = UDim2.new(0, 0, 0.5, 0)
+        sliderBar.BackgroundColor3 = Color3.fromRGB(60, 60, 65)
+        sliderBar.BorderSizePixel = 0
+        sliderBar.Parent = sliderFrame
+        
+        local sliderBarCorner = Instance.new("UICorner")
+        sliderBarCorner.CornerRadius = UDim.new(1, 0)
+        sliderBarCorner.Parent = sliderBar
+        
+        local slideFill = Instance.new("Frame")
+        slideFill.Name = "SlideFill"
+        slideFill.Size = UDim2.new(0.5, 0, 1, 0)
+        slideFill.BackgroundColor3 = ACCENT_COLOR
+        slideFill.BorderSizePixel = 0
+        slideFill.Parent = sliderBar
+        
+        local slideFillCorner = Instance.new("UICorner")
+        slideFillCorner.CornerRadius = UDim.new(1, 0)
+        slideFillCorner.Parent = slideFill
+        
+        local sliderButton = Instance.new("TextButton")
+		sliderButton.Name = "TextButton"
+		sliderButton.Size = UDim2.new(0, 20, 0, 20)
+		sliderButton.Position = UDim2.new(0.5, -10, 0.5, -10) -- Center the button on the line
+		sliderButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		sliderButton.BorderSizePixel = 0
+		sliderButton.Text = ""
+		sliderButton.Parent = sliderBar
+        
+        local sliderButtonCorner = Instance.new("UICorner")
+        sliderButtonCorner.CornerRadius = UDim.new(1, 0)
+        sliderButtonCorner.Parent = sliderButton
+        
+        local sliderValue = Instance.new("TextBox")
+        sliderValue.Name = "SlideValue"
+        sliderValue.Size = UDim2.new(0, 50, 0, 20)
+        sliderValue.Position = UDim2.new(1, -60, 0, 5)
+        sliderValue.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+        sliderValue.BorderSizePixel = 0
+        sliderValue.Font = Enum.Font.SourceSans
+        sliderValue.TextSize = 16
+        sliderValue.TextColor3 = Color3.new(1, 1, 1)
+        sliderValue.Text = "50"
+        sliderValue.Parent = sliderTemplate
+        
+        local sliderValueCorner = Instance.new("UICorner")
+        sliderValueCorner.CornerRadius = UDim.new(0, 4)
+        sliderValueCorner.Parent = sliderValue
+        
+        -- Button template
+        local buttonTemplate = Instance.new("TextButton")
+        buttonTemplate.Name = "Button"
+        buttonTemplate.Size = UDim2.new(1, 0, 0, 40)
+        buttonTemplate.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+        buttonTemplate.BorderSizePixel = 0
+        buttonTemplate.Text = ""
+        buttonTemplate.Parent = contentFrame
+        
+        local buttonCorner = Instance.new("UICorner")
+        buttonCorner.CornerRadius = UDim.new(0, 4)
+        buttonCorner.Parent = buttonTemplate
+        
+        local buttonLabel = Instance.new("TextLabel")
+        buttonLabel.Name = "ButtonLabel"
+        buttonLabel.Size = UDim2.new(1, 0, 1, 0)
+        buttonLabel.BackgroundTransparency = 1
+        buttonLabel.Font = Enum.Font.SourceSansBold
+        buttonLabel.TextSize = 18
+        buttonLabel.TextColor3 = Color3.new(1, 1, 1)
+        buttonLabel.Text = "Button"
+        buttonLabel.Parent = buttonTemplate
+        
+        -- Textbox template
+        local textboxTemplate = Instance.new("Frame")
+        textboxTemplate.Name = "Textbox"
+        textboxTemplate.Size = UDim2.new(1, 0, 0, 50)
+        textboxTemplate.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+        textboxTemplate.BorderSizePixel = 0
+        textboxTemplate.Parent = contentFrame
+        
+        local textboxTemplateCorner = Instance.new("UICorner")
+        textboxTemplateCorner.CornerRadius = UDim.new(0, 4)
+        textboxTemplateCorner.Parent = textboxTemplate
+        
+        local textboxLabel = Instance.new("TextLabel")
+        textboxLabel.Name = "TextboxLabel"
+        textboxLabel.Size = UDim2.new(0, 200, 0, 50)
+        textboxLabel.Position = UDim2.new(0, 10, 0, 0)
+        textboxLabel.BackgroundTransparency = 1
+        textboxLabel.Font = Enum.Font.SourceSans
+        textboxLabel.TextSize = 18
+        textboxLabel.TextColor3 = Color3.new(1, 1, 1)
+        textboxLabel.TextXAlignment = Enum.TextXAlignment.Left
+        textboxLabel.Text = "Textbox Option"
+        textboxLabel.Parent = textboxTemplate
+        
+        local textboxFrame = Instance.new("Frame")
+        textboxFrame.Name = "TextBoxFrame"
+        textboxFrame.Size = UDim2.new(0, 200, 0, 30)
+        textboxFrame.Position = UDim2.new(1, -210, 0.5, -15)
+        textboxFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+        textboxFrame.BorderSizePixel = 0
+        textboxFrame.Parent = textboxTemplate
+        
+        local textboxFrameCorner = Instance.new("UICorner")
+        textboxFrameCorner.CornerRadius = UDim.new(0, 4)
+        textboxFrameCorner.Parent = textboxFrame
+        
+        local textBox = Instance.new("TextBox")
+        textBox.Name = "TextBox"
+        textBox.Size = UDim2.new(1, -10, 1, 0)
+        textBox.Position = UDim2.new(0, 5, 0, 0)
+        textBox.BackgroundTransparency = 1
+        textBox.Font = Enum.Font.SourceSans
+        textBox.TextSize = 16
+        textBox.TextColor3 = Color3.new(1, 1, 1)
+        textBox.Text = ""
+        textBox.PlaceholderText = "Enter text..."
+        textBox.Parent = textboxFrame
+        
+        -- Keybind template
+        local keybindTemplate = Instance.new("Frame")
+        keybindTemplate.Name = "Keybind"
+        keybindTemplate.Size = UDim2.new(1, 0, 0, 50)
+        keybindTemplate.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+        keybindTemplate.BorderSizePixel = 0
+        keybindTemplate.Parent = contentFrame
+        
+        local keybindTemplateCorner = Instance.new("UICorner")
+        keybindTemplateCorner.CornerRadius = UDim.new(0, 4)
+        keybindTemplateCorner.Parent = keybindTemplate
+        
+        local keybindLabel = Instance.new("TextLabel")
+        keybindLabel.Name = "KeybindLabel"
+        keybindLabel.Size = UDim2.new(0, 200, 0, 50)
+        keybindLabel.Position = UDim2.new(0, 10, 0, 0)
+        keybindLabel.BackgroundTransparency = 1
+        keybindLabel.Font = Enum.Font.SourceSans
+        keybindLabel.TextSize = 18
+        keybindLabel.TextColor3 = Color3.new(1, 1, 1)
+        keybindLabel.TextXAlignment = Enum.TextXAlignment.Left
+        keybindLabel.Text = "Keybind Option"
+        keybindLabel.Parent = keybindTemplate
+        
+        local bindButton = Instance.new("TextButton")
+        bindButton.Name = "BindButton"
+        bindButton.Size = UDim2.new(0, 150, 0, 30)
+        bindButton.Position = UDim2.new(1, -160, 0.5, -15)
+        bindButton.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+        bindButton.BorderSizePixel = 0
+        bindButton.Font = Enum.Font.SourceSans
+        bindButton.TextSize = 16
+        bindButton.TextColor3 = Color3.new(1, 1, 1)
+        bindButton.Text = "Click to bind"
+        bindButton.Parent = keybindTemplate
+        
+        local bindButtonCorner = Instance.new("UICorner")
+        bindButtonCorner.CornerRadius = UDim.new(0, 4)
+        bindButtonCorner.Parent = bindButton
+        
+        -- Label template
+        local labelTemplate = Instance.new("Frame")
+        labelTemplate.Name = "Label"
+        labelTemplate.Size = UDim2.new(1, 0, 0, 40)
+        labelTemplate.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+        labelTemplate.BorderSizePixel = 0
+        labelTemplate.Parent = contentFrame
+        
+        local labelTemplateCorner = Instance.new("UICorner")
+        labelTemplateCorner.CornerRadius = UDim.new(0, 4)
+        labelTemplateCorner.Parent = labelTemplate
+        
+        local label = Instance.new("TextLabel")
+        label.Name = "Textlabel"
+        label.Size = UDim2.new(1, -20, 1, 0)
+        label.Position = UDim2.new(0, 10, 0, 0)
+        label.BackgroundTransparency = 1
+        label.Font = Enum.Font.SourceSansBold
+        label.TextSize = 18
+        label.TextColor3 = Color3.new(1, 1, 1)
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.Text = "Label Text"
+        label.Parent = labelTemplate
+        
+        -- Dropdown template
+        local dropdownTemplate = Instance.new("Frame")
+        dropdownTemplate.Name = "Multi-Dropdown"
+        dropdownTemplate.Size = UDim2.new(1, 0, 0, 50)
+        dropdownTemplate.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+        dropdownTemplate.BorderSizePixel = 0
+        dropdownTemplate.Parent = contentFrame
+        
+        local dropdownTemplateCorner = Instance.new("UICorner")
+        dropdownTemplateCorner.CornerRadius = UDim.new(0, 4)
+        dropdownTemplateCorner.Parent = dropdownTemplate
+        
+        local dropdownLabel = Instance.new("TextLabel")
+        dropdownLabel.Name = "DropdownLabel"
+        dropdownLabel.Size = UDim2.new(0, 200, 0, 50)
+        dropdownLabel.Position = UDim2.new(0, 10, 0, 0)
+        dropdownLabel.BackgroundTransparency = 1
+        dropdownLabel.Font = Enum.Font.SourceSans
+        dropdownLabel.TextSize = 18
+        dropdownLabel.TextColor3 = Color3.new(1, 1, 1)
+        dropdownLabel.TextXAlignment = Enum.TextXAlignment.Left
+        dropdownLabel.Text = "Dropdown Option"
+        dropdownLabel.Parent = dropdownTemplate
+        
+        local downButton = Instance.new("ImageButton")
+        downButton.Name = "DownButton"
+        downButton.Size = UDim2.new(0, 24, 0, 24)
+        downButton.Position = UDim2.new(1, -40, 0.5, -12)
+        downButton.BackgroundTransparency = 1
+        downButton.Image = "rbxassetid://6031091004"
+        downButton.Parent = dropdownTemplate
+        
+        local upButton = Instance.new("ImageButton")
+        upButton.Name = "UpButton"
+        upButton.Size = UDim2.new(0, 24, 0, 24)
+        upButton.Position = UDim2.new(1, -40, 0.5, -12)
+        upButton.BackgroundTransparency = 1
+        upButton.Image = "rbxassetid://6031090990"
+        upButton.Visible = false
+        upButton.Parent = dropdownTemplate
+        
+        local selectionMenu = Instance.new("Frame")
+        selectionMenu.Name = "SelectionMenu"
+        selectionMenu.Size = UDim2.new(1, 0, 0, 0)
+        selectionMenu.Position = UDim2.new(0, 0, 1, 5)
+        selectionMenu.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+        selectionMenu.BorderSizePixel = 0
+        selectionMenu.Visible = false
+        selectionMenu.ClipsDescendants = true
+        selectionMenu.Parent = dropdownTemplate
+        
+        local selectionMenuCorner = Instance.new("UICorner")
+        selectionMenuCorner.CornerRadius = UDim.new(0, 4)
+        selectionMenuCorner.Parent = selectionMenu
+        
+        local selectionListLayout = Instance.new("UIListLayout")
+        selectionListLayout.Padding = UDim.new(0, 5)
+        selectionListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+        selectionListLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+        selectionListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        selectionListLayout.Parent = selectionMenu
+        
+        local selectionPadding = Instance.new("UIPadding")
+        selectionPadding.PaddingTop = UDim.new(0, 5)
+        selectionPadding.PaddingBottom = UDim.new(0, 5)
+        selectionPadding.Parent = selectionMenu
+        
+        -- Hide all templates by default
+        toggleTemplate.Visible = false
+        sliderTemplate.Visible = false
+        buttonTemplate.Visible = false
+        textboxTemplate.Visible = false
+        keybindTemplate.Visible = false
+        labelTemplate.Visible = false
+        dropdownTemplate.Visible = false
+    end
+    
+    return mainGUI
+end
+
+-- Create or get the references to UI elements
+local MainGUI = setupGUI()
+local UIHolder = MainGUI:WaitForChild("UIHolder")
+local LeftSideBar = UIHolder:WaitForChild("LeftSideBar")
+local Tabs = LeftSideBar:WaitForChild("Tabs"):WaitForChild("Tabs")
+local ContentFrame = UIHolder:WaitForChild("ContentFrame")
+local Notification = MainGUI:WaitForChild("Notification")
+
+-- Initialize notification to be hidden
+Notification.Visible = false
+
+-- Animation System
+local AnimationSystem = {}
+
+function AnimationSystem.CreateTween(instance, properties, duration, easingStyle, easingDirection, repeatCount, reverses, delayTime)
+    local tweenInfo = TweenInfo.new(
+        duration or 0.3,
+        easingStyle or Enum.EasingStyle.Quad,
+        easingDirection or Enum.EasingDirection.Out,
+        repeatCount or 0,
+        reverses or false,
+        delayTime or 0
+    )
+    
+    local tween = TweenService:Create(instance, tweenInfo, properties)
+    return tween
+end
+
+function AnimationSystem.CreateHoverEffect(instance, originalColor)
+    local darkenedColor = Color3.new(
+        math.clamp(originalColor.R - HOVER_DARKEN_AMOUNT, 0, 1),
+        math.clamp(originalColor.G - HOVER_DARKEN_AMOUNT, 0, 1),
+        math.clamp(originalColor.B - HOVER_DARKEN_AMOUNT, 0, 1)
+    )
+    
+    instance.MouseEnter:Connect(function()
+        AnimationSystem.CreateTween(instance, {BackgroundColor3 = darkenedColor}, 0.2):Play()
+    end)
+    
+    instance.MouseLeave:Connect(function()
+        AnimationSystem.CreateTween(instance, {BackgroundColor3 = originalColor}, 0.2):Play()
+    end)
+end
+
+-- Advanced Animation Functions
+function AnimationSystem.CreateRippleEffect(button)
+    button.ClipsDescendants = true
+    
+    button.MouseButton1Down:Connect(function(x, y)
+        local ripple = Instance.new("Frame")
+        ripple.Name = "RippleEffect"
+        ripple.AnchorPoint = Vector2.new(0.5, 0.5)
+        ripple.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        ripple.BackgroundTransparency = 0.7
+        ripple.Position = UDim2.new(0, x - button.AbsolutePosition.X, 0, y - button.AbsolutePosition.Y)
+        ripple.Size = UDim2.new(0, 0, 0, 0)
+        
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(1, 0)
+        corner.Parent = ripple
+        
+        ripple.Parent = button
+        
+        local targetSize = UDim2.new(0, button.AbsoluteSize.X * 1.5, 0, button.AbsoluteSize.Y * 1.5)
+        local tween = TweenService:Create(
+            ripple,
+            TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
+            {Size = targetSize, BackgroundTransparency = 1}
+        )
+        
+        tween.Completed:Connect(function()
+            ripple:Destroy()
+        end)
+        
+        tween:Play()
+    end)
+end
+
+function AnimationSystem.ShakeElement(element, intensity)
+    intensity = intensity or 5
+    local originalPosition = element.Position
+    
+    local shake = {}
+    for i = 1, 5 do
+        table.insert(shake, UDim2.new(
+            originalPosition.X.Scale, originalPosition.X.Offset + math.random(-intensity, intensity),
+            originalPosition.Y.Scale, originalPosition.Y.Offset + math.random(-intensity, intensity)
+        ))
+    end
+    
+    for _, position in ipairs(shake) do
+        element.Position = position
+        task.wait(0.03)
+    end
+    
+    element.Position = originalPosition
+end
+
+function AnimationSystem.PulseElement(element, color)
+    local originalColor = element.BackgroundColor3
+    local targetColor = color or ACCENT_COLOR
+    
+    local tweenIn = TweenService:Create(
+        element,
+        TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.Out),
+        {BackgroundColor3 = targetColor}
+    )
+    
+    local tweenOut = TweenService:Create(
+        element,
+        TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.In),
+        {BackgroundColor3 = originalColor}
+    )
+    
+    tweenIn.Completed:Connect(function()
+        tweenOut:Play()
+    end)
+    
+    tweenIn:Play()
+end
+
+function AnimationSystem.ScaleElement(element, scale, duration)
+    scale = scale or 1.1
+    duration = duration or 0.2
+    
+    local originalSize = element.Size
+    local targetSize = UDim2.new(
+        originalSize.X.Scale * scale, originalSize.X.Offset * scale,
+        originalSize.Y.Scale * scale, originalSize.Y.Offset * scale
+    )
+    
+    local tweenUp = TweenService:Create(
+        element,
+        TweenInfo.new(duration, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+        {Size = targetSize}
+    )
+    
+    local tweenDown = TweenService:Create(
+        element,
+        TweenInfo.new(duration, Enum.EasingStyle.Back, Enum.EasingDirection.In),
+        {Size = originalSize}
+    )
+    
+    tweenUp.Completed:Connect(function()
+        tweenDown:Play()
+    end)
+    
+    tweenUp:Play()
+end
+
+function AnimationSystem.FadeElement(element, targetTransparency, duration)
+    duration = duration or 0.5
+    local properties = {}
+    
+    if element:IsA("TextLabel") or element:IsA("TextButton") or element:IsA("TextBox") then
+        properties.TextTransparency = targetTransparency
+    elseif element:IsA("ImageLabel") or element:IsA("ImageButton") then
+        properties.ImageTransparency = targetTransparency
+    end
+    
+    properties.BackgroundTransparency = targetTransparency
+    
+    local tween = TweenService:Create(
+        element,
+        TweenInfo.new(duration, Enum.EasingStyle.Sine),
+        properties
+    )
+    
+    tween:Play()
+    return tween
+end
+
+-- Notification System
+function ShowNotification(title, description, color)
+    if Notification.Visible then
+        -- If a notification is already showing, queue this one
+        task.delay(0.5, function()
+            ShowNotification(title, description, color)
+        end)
+        return
+    end
+    
+    -- Set notification properties
+    Notification.Title.Text = title
+    Notification.TextLabel.Text = description
+    Notification.ColorLineEDITABLEINSCRIPT.BackgroundColor3 = color or ACCENT_COLOR
+    
+    -- Position off-screen at bottom-right
+    Notification.Position = UDim2.new(1, 10, 1, 10)
+    Notification.Visible = true
+    
+    -- Slide in from right
+    local slideInTween = AnimationSystem.CreateTween(
+        Notification,
+        {Position = UDim2.new(1, -165, 1, -75)},
+        0.4,
+        Enum.EasingStyle.Quart
+    )
+    
+    slideInTween:Play()
+    
+    -- Wait and slide out
+    task.delay(NOTIFICATION_DURATION, function()
+        local slideOutTween = AnimationSystem.CreateTween(
+            Notification,
+            {Position = UDim2.new(1, 10, 1, 10)},
+            0.4,
+            Enum.EasingStyle.Quart
+        )
+        
+        slideOutTween.Completed:Connect(function()
+            Notification.Visible = false
+        end)
+        
+        slideOutTween:Play()
+    end)
+end
+
+-- Config System
+local ConfigSystem = {}
+ConfigSystem.CurrentConfig = {}
+ConfigSystem.Callbacks = {}
+
+function ConfigSystem.Initialize()
+    -- Create config folder if it doesn't exist
+    if not isfolder(CONFIG_FOLDER_NAME) then
+        makefolder(CONFIG_FOLDER_NAME)
+    end
+    
+    -- Create default config if it doesn't exist
+    if not isfile(CONFIG_FOLDER_NAME .. "/" .. DEFAULT_CONFIG_NAME .. ".json") then
+        ConfigSystem.SaveConfig(DEFAULT_CONFIG_NAME)
+    else
+        ConfigSystem.LoadConfig(DEFAULT_CONFIG_NAME)
+    end
+end
+
+function ConfigSystem.RegisterElement(id, defaultValue, callback)
+    ConfigSystem.CurrentConfig[id] = ConfigSystem.CurrentConfig[id] or defaultValue
+    ConfigSystem.Callbacks[id] = callback
+    
+    -- Apply loaded value (or default if not loaded yet)
+    if callback then
+        callback(ConfigSystem.CurrentConfig[id])
+    end
+    
+    return {
+        SetValue = function(value)
+            ConfigSystem.CurrentConfig[id] = value
+            if callback then
+                callback(value)
+            end
+        end,
+        GetValue = function()
+            return ConfigSystem.CurrentConfig[id]
+        end
+    }
+end
+
+function ConfigSystem.SaveConfig(configName)
+    local success, result = pcall(function()
+        return game:GetService("HttpService"):JSONEncode(ConfigSystem.CurrentConfig)
+    end)
+    
+    if success then
+        writefile(CONFIG_FOLDER_NAME .. "/" .. configName .. ".json", result)
+        ShowNotification("Config Saved", "Successfully saved config: " .. configName, Color3.fromRGB(0, 255, 0))
+        return true
+    else
+        ShowNotification("Error", "Failed to save config", Color3.fromRGB(255, 0, 0))
+        return false
+    end
+end
+
+function ConfigSystem.LoadConfig(configName)
+    if isfile(CONFIG_FOLDER_NAME .. "/" .. configName .. ".json") then
+        local success, result = pcall(function()
+            local content = readfile(CONFIG_FOLDER_NAME .. "/" .. configName .. ".json")
+            return game:GetService("HttpService"):JSONDecode(content)
+        end)
+        
+        if success then
+            ConfigSystem.CurrentConfig = result
+            
+            -- Apply all loaded values
+            for id, value in pairs(ConfigSystem.CurrentConfig) do
+                if ConfigSystem.Callbacks[id] then
+                    ConfigSystem.Callbacks[id](value)
+                end
+            end
+            
+            ShowNotification("Config Loaded", "Successfully loaded config: " .. configName, Color3.fromRGB(0, 255, 0))
+            return true
+        else
+            ShowNotification("Error", "Failed to load config", Color3.fromRGB(255, 0, 0))
+            return false
+        end
+    else
+        ShowNotification("Error", "Config not found", Color3.fromRGB(255, 0, 0))
+        return false
+    end
+end
+
+function ConfigSystem.ListConfigs()
+    if isfolder(CONFIG_FOLDER_NAME) then
+        local files = listfiles(CONFIG_FOLDER_NAME)
+        local configs = {}
+        
+        for _, file in ipairs(files) do
+            local fileName = string.match(file, "[^/\\]+$")
+            local configName = string.match(fileName, "(.+)%.json$")
+            if configName then
+                table.insert(configs, configName)
+            end
+        end
+        
+        return configs
+    end
+    
+    return {}
+end
+
+function ConfigSystem.ExportConfig(configName)
+    if isfile(CONFIG_FOLDER_NAME .. "/" .. configName .. ".json") then
+        local configContent = readfile(CONFIG_FOLDER_NAME .. "/" .. configName .. ".json")
+        
+        -- Create an encoded version that's easier to share
+        local encodedConfig = game:GetService("HttpService"):JSONEncode({
+            name = configName,
+            content = configContent,
+            version = "1.0"
+        })
+        
+        setclipboard(encodedConfig)
+        ShowNotification("Success", "Config exported to clipboard", Color3.fromRGB(0, 255, 0))
+        return true
+    else
+        ShowNotification("Error", "Config not found", Color3.fromRGB(255, 0, 0))
+        return false
+    end
+end
+
+function ConfigSystem.ImportConfig()
+    local success, result = pcall(function()
+        local clipboardContent = getclipboard()
+        return game:GetService("HttpService"):JSONDecode(clipboardContent)
+    end)
+    
+    if success and result and result.name and result.content and result.version then
+        -- Write the config file
+        writefile(CONFIG_FOLDER_NAME .. "/" .. result.name .. ".json", result.content)
+        
+        ShowNotification("Success", "Config imported: " .. result.name, Color3.fromRGB(0, 255, 0))
+        return true
+    else
+        ShowNotification("Error", "Invalid config format in clipboard", Color3.fromRGB(255, 0, 0))
+        return false
+    end
+end
+
+-- Tab System
+local TabSystem = {}
+TabSystem.CurrentTab = nil
+TabSystem.Tabs = {}
+
+function TabSystem.Initialize()
+    -- Find all tabs in the sidebar
+    for _, tab in pairs(Tabs:GetChildren()) do
+        if tab:IsA("Frame") and tab.Name:find("Tab") then
+            local tabButton = tab:FindFirstChildOfClass("TextButton")
+            local tabIcon = tab:FindFirstChildOfClass("ImageButton")
+            
+            if tabButton then
+                -- Add tab to our system
+                local tabName = tabButton.Text
+                local tabData = {
+                    Frame = tab,
+                    Button = tabButton,
+                    Icon = tabIcon,
+                    Content = nil, -- Will be assigned later
+                    OriginalTextColor = tabButton.TextColor3,
+                    OriginalIconColor = tabIcon and tabIcon.ImageColor3
+                }
+                
+                TabSystem.Tabs[tabName] = tabData
+                
+                -- Apply hover effect to tab
+                tabButton.MouseEnter:Connect(function()
+                    if TabSystem.CurrentTab ~= tabName then
+                        AnimationSystem.CreateTween(
+                            tabButton, 
+                            {TextColor3 = ACCENT_COLOR:lerp(Color3.new(1,1,1), 0.5)},
+                            0.3
+                        ):Play()
+                    end
+                end)
+                
+                tabButton.MouseLeave:Connect(function()
+                    if TabSystem.CurrentTab ~= tabName then
+                        AnimationSystem.CreateTween(
+                            tabButton, 
+                            {TextColor3 = tabData.OriginalTextColor},
+                            0.3
+                        ):Play()
+                    end
+                end)
+                
+                -- Add click event to tab
+                tabButton.MouseButton1Click:Connect(function()
+                    TabSystem.SelectTab(tabName)
+                end)
+                
+                -- Also make icon clickable
+                if tabIcon then
+                    tabIcon.MouseButton1Click:Connect(function()
+                        TabSystem.SelectTab(tabName)
+                    end)
+                end
+            end
+        end
+    end
+    
+    -- Organize content into tab sections
+    local function createTabContainer(tabName)
+        local container = Instance.new("ScrollingFrame")
+        container.Name = "Container_" .. tabName
+        container.BackgroundTransparency = 1
+        container.BorderSizePixel = 0
+        container.Size = UDim2.new(1, 0, 1, 0)
+        container.CanvasSize = UDim2.new(0, 0, 0, 0)
+        container.ScrollBarThickness = 4
+        container.Visible = false
+        container.Parent = ContentFrame
+        
+        local uiPadding = Instance.new("UIPadding")
+        uiPadding.PaddingLeft = UDim.new(0, 10)
+        uiPadding.PaddingRight = UDim.new(0, 10)
+        uiPadding.PaddingTop = UDim.new(0, 10)
+        uiPadding.PaddingBottom = UDim.new(0, 10)
+        uiPadding.Parent = container
+        
+        local uiListLayout = Instance.new("UIListLayout")
+        uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        uiListLayout.Padding = UDim.new(0, 10)
+        uiListLayout.Parent = container
+        
+        -- Auto-adjust canvas size
+        uiListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            container.CanvasSize = UDim2.new(0, 0, 0, uiListLayout.AbsoluteContentSize.Y + 20)
+        end)
+        
+        return container
+    end
+    
+    -- Create containers for each tab
+    for tabName, tabData in pairs(TabSystem.Tabs) do
+        tabData.Content = createTabContainer(tabName)
+    end
+    
+    -- Initially select the first tab (Home)
+    TabSystem.SelectTab("Home")
+end
+
+function TabSystem.SelectTab(tabName)
+    -- If already selected, do nothing
+    if TabSystem.CurrentTab == tabName then
+        return
+    end
+    
+    -- Reset previous tab if exists
+    if TabSystem.CurrentTab and TabSystem.Tabs[TabSystem.CurrentTab] then
+        local prevTab = TabSystem.Tabs[TabSystem.CurrentTab]
+        
+        -- Reset text color with animation
+        AnimationSystem.CreateTween(
+            prevTab.Button, 
+            {TextColor3 = prevTab.OriginalTextColor},
+            0.3
+        ):Play()
+        
+        -- Reset icon color if exists
+        if prevTab.Icon then
+            AnimationSystem.CreateTween(
+                prevTab.Icon, 
+                {ImageColor3 = prevTab.OriginalIconColor or Color3.new(1, 1, 1)},
+                0.3
+            ):Play()
+        end
+        
+        -- Hide content with fade out
+        if prevTab.Content then
+            local fadeTween = AnimationSystem.CreateTween(
+                prevTab.Content, 
+                {BackgroundTransparency = 1},
+                0.2
+            )
+            
+            fadeTween.Completed:Connect(function()
+                prevTab.Content.Visible = false
+            end)
+            
+            fadeTween:Play()
+        end
+    end
+    
+    -- Select new tab
+    local newTab = TabSystem.Tabs[tabName]
+    if newTab then
+        -- Update text color with animation
+        AnimationSystem.CreateTween(
+            newTab.Button, 
+            {TextColor3 = ACCENT_COLOR},
+            0.3
+        ):Play()
+        
+        -- Update icon color if exists
+        if newTab.Icon then
+            AnimationSystem.CreateTween(
+                newTab.Icon, 
+                {ImageColor3 = ACCENT_COLOR},
+                0.3
+            ):Play()
+        end
+        
+        -- Show content with fade in
+        if newTab.Content then
+            newTab.Content.BackgroundTransparency = 1
+            newTab.Content.Visible = true
+            
+            AnimationSystem.CreateTween(
+                newTab.Content, 
+                {BackgroundTransparency = 1}, -- Keep transparent but make visible
+                0.3
+            ):Play()
+        end
+        
+        TabSystem.CurrentTab = tabName
+    end
+end
+
+-- Element Creation System
+local ElementSystem = {}
+
+function ElementSystem.SetupToggle(toggleInstance, initialState, callback)
+    local toggle = toggleInstance:FindFirstChild("Toggle")
+    local circle = toggle:FindFirstChild("Toggle-Circle")
+    local configItem = nil
+    
+    if initialState == nil then initialState = false end
+    
+    -- Update toggle state visually
+    local function updateToggleVisual(state)
+        local targetPosition = state and UDim2.new(0.565, 0, 0.188, 0) or UDim2.new(0.145, 0, 0.188, 0)
+        local targetColor = state and ACCENT_COLOR or Color3.fromRGB(30, 30, 35)
+        
+        AnimationSystem.CreateTween(circle, {Position = targetPosition}, 0.3, Enum.EasingStyle.Quart):Play()
+        AnimationSystem.CreateTween(toggle, {BackgroundColor3 = targetColor}, 0.3):Play()
+    end
+    
+    -- Custom hover effect instead of using AnimationSystem.CreateHoverEffect
+    local isHovering = false
+    
+    toggle.MouseEnter:Connect(function()
+        isHovering = true
+        local currentColor = toggle.BackgroundColor3
+        local darkenedColor = Color3.new(
+            math.clamp(currentColor.R - HOVER_DARKEN_AMOUNT, 0, 1),
+            math.clamp(currentColor.G - HOVER_DARKEN_AMOUNT, 0, 1),
+            math.clamp(currentColor.B - HOVER_DARKEN_AMOUNT, 0, 1)
+        )
+        AnimationSystem.CreateTween(toggle, {BackgroundColor3 = darkenedColor}, 0.2):Play()
+    end)
+    
+    toggle.MouseLeave:Connect(function()
+        isHovering = false
+        local state = configItem and configItem.GetValue() or initialState
+        local targetColor = state and ACCENT_COLOR or Color3.fromRGB(30, 30, 35)
+        AnimationSystem.CreateTween(toggle, {BackgroundColor3 = targetColor}, 0.2):Play()
+    end)
+    
+    -- Register with config system
+    if toggleInstance.Name:find("Option") == nil then -- Don't register dropdown options
+        local toggleId = toggleInstance.ToggleLabel.Text
+        configItem = ConfigSystem.RegisterElement(toggleId, initialState, function(value)
+            updateToggleVisual(value)
+            
+            -- If not hovering, update the color to match the state
+            if not isHovering then
+                local targetColor = value and ACCENT_COLOR or Color3.fromRGB(30, 30, 35)
+                AnimationSystem.CreateTween(toggle, {BackgroundColor3 = targetColor}, 0.3):Play()
+            else
+                -- If hovering, apply the darkened version of the appropriate color
+                local baseColor = value and ACCENT_COLOR or Color3.fromRGB(30, 30, 35)
+                local darkenedColor = Color3.new(
+                    math.clamp(baseColor.R - HOVER_DARKEN_AMOUNT, 0, 1),
+                    math.clamp(baseColor.G - HOVER_DARKEN_AMOUNT, 0, 1),
+                    math.clamp(baseColor.B - HOVER_DARKEN_AMOUNT, 0, 1)
+                )
+                AnimationSystem.CreateTween(toggle, {BackgroundColor3 = darkenedColor}, 0.3):Play()
+            end
+            
+            if callback then callback(value) end
+        end)
+    else
+        updateToggleVisual(initialState)
+    end
+    
+    -- Handle click
+    toggle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            local newState = not (configItem and configItem.GetValue() or initialState)
+            
+            if configItem then
+                configItem.SetValue(newState)
+            else
+                initialState = newState
+                updateToggleVisual(newState)
+                if callback then callback(newState) end
+            end
+        end
+    end)
+    
+    -- Make the circle also clickable
+    circle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            local newState = not (configItem and configItem.GetValue() or initialState)
+            
+            if configItem then
+                configItem.SetValue(newState)
+            else
+                initialState = newState
+                updateToggleVisual(newState)
+                if callback then callback(newState) end
+            end
+        end
+    end)
+    
+    return {
+        SetValue = function(value)
+            if configItem then
+                configItem.SetValue(value)
+            else
+                initialState = value
+                updateToggleVisual(value)
+                if callback then callback(value) end
+            end
+        end,
+        GetValue = function()
+            return configItem and configItem.GetValue() or initialState
+        end
+    }
+end
+
+function ElementSystem.SetupSlider(sliderInstance, min, max, initialValue, callback)
+    local slider = sliderInstance:FindFirstChild("Slider"):FindFirstChild("Slider")
+    local textButton = slider:FindFirstChild("TextButton")
+    local slideFill = slider:FindFirstChild("SlideFill")
+    local valueBox = sliderInstance:FindFirstChild("SlideValue")
+    
+    min = min or 0
+    max = max or 100
+    initialValue = initialValue or min
+    
+    -- Clamp initial value
+    initialValue = math.clamp(initialValue, min, max)
+
+	-- Update slider visually
+    local function updateSliderVisual(value)
+		local percent = (value - min) / (max - min)
+		local fillSize = UDim2.new(percent, 0, 1, 0)
+		local buttonPosition = UDim2.new(percent, -10, 0.5, -10) -- Center the button on the line
+		
+		AnimationSystem.CreateTween(slideFill, {Size = fillSize}, 0.2):Play()
+		AnimationSystem.CreateTween(textButton, {Position = buttonPosition}, 0.2):Play()
+		valueBox.Text = tostring(math.floor(value))
+	end
+    
+    -- Register with config system
+    local sliderId = sliderInstance.SlideLabel.Text
+    local configItem = ConfigSystem.RegisterElement(sliderId, initialValue, function(value)
+        updateSliderVisual(value)
+        if callback then callback(value) end
+    end)
+    
+    -- Initial setup
+    updateSliderVisual(initialValue)
+    
+    -- Handle button drag
+	local isDragging = false
+
+	textButton.MouseButton1Down:Connect(function()
+		isDragging = true
+		
+		-- Enlarge the button slightly for feedback
+		AnimationSystem.CreateTween(textButton, {Size = UDim2.new(0, 24, 0, 24)}, 0.1):Play()
+	end)
+
+	-- Add a mouse move event to properly handle dragging
+	UserInputService.InputChanged:Connect(function(input)
+		if isDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+			local sliderPosition = slider.AbsolutePosition
+			local sliderSize = slider.AbsoluteSize
+			local mousePosition = input.Position.X
+			
+			local relativePosition = math.clamp((mousePosition - sliderPosition.X) / sliderSize.X, 0, 1)
+			local value = min + (max - min) * relativePosition
+			
+			configItem.SetValue(value)
+		end
+	end)
+
+	UserInputService.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			if isDragging then
+				isDragging = false
+				-- Return button to normal size
+				AnimationSystem.CreateTween(textButton, {Size = UDim2.new(0, 20, 0, 20)}, 0.1):Play()
+			end
+		end
+	end)
+
+	-- Handle slider click
+	local function updateSlider(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			local sliderPosition = slider.AbsolutePosition
+			local sliderSize = slider.AbsoluteSize
+			local mousePosition = input.Position.X
+			
+			local relativePosition = math.clamp((mousePosition - sliderPosition.X) / sliderSize.X, 0, 1)
+			local value = min + (max - min) * relativePosition
+			
+			configItem.SetValue(value)
+			
+			-- Start dragging on click
+			isDragging = true
+			AnimationSystem.CreateTween(textButton, {Size = UDim2.new(0, 24, 0, 24)}, 0.1):Play()
+		end
+	end
+
+	slider.InputBegan:Connect(updateSlider)
+
+    -- Handle manual value input
+    valueBox.FocusLost:Connect(function(enterPressed)
+        if enterPressed then
+            local inputValue = tonumber(valueBox.Text)
+            if inputValue then
+                configItem.SetValue(math.clamp(inputValue, min, max))
+            else
+                valueBox.Text = tostring(math.floor(configItem.GetValue()))
+            end
+        end
+    end)
+    
+    return {
+        SetValue = function(value)
+            configItem.SetValue(math.clamp(value, min, max))
+        end,
+        GetValue = function()
+            return configItem.GetValue()
+        end,
+        SetMin = function(value)
+            min = value
+            configItem.SetValue(math.clamp(configItem.GetValue(), min, max))
+        end,
+        SetMax = function(value)
+            max = value
+            configItem.SetValue(math.clamp(configItem.GetValue(), min, max))
+        end
+    }
+end
+
+function ElementSystem.SetupTextbox(textboxInstance, initialValue, callback)
+    local textBoxFrame = textboxInstance:FindFirstChild("TextBoxFrame")
+    local textBox = textBoxFrame:FindFirstChild("TextBox")
+    
+    initialValue = initialValue or ""
+    
+    -- Register with config system
+    local textboxId = textboxInstance.TextboxLabel.Text
+    local configItem = ConfigSystem.RegisterElement(textboxId, initialValue, function(value)
+        textBox.Text = value
+        if callback then callback(value) end
+    end)
+    
+    -- Add hover effect
+    AnimationSystem.CreateHoverEffect(textBoxFrame, textBoxFrame.BackgroundColor3)
+    
+    -- Handle text change
+    textBox.FocusLost:Connect(function(enterPressed)
+        if enterPressed or true then -- Always update on focus lost
+            configItem.SetValue(textBox.Text)
+        end
+    end)
+    
+    -- Apply initial value
+    textBox.Text = initialValue
+    
+    return {
+        SetValue = function(value)
+            configItem.SetValue(value)
+        end,
+        GetValue = function()
+            return configItem.GetValue()
+        end
+    }
+end
+
+function ElementSystem.SetupKeybind(keybindInstance, initialKeycode, callback)
+    local bindButton = keybindInstance:FindFirstChild("BindButton")
+    
+    initialKeycode = initialKeycode or Enum.KeyCode.LeftControl
+    
+    -- Register with config system
+    local keybindId = keybindInstance.KeybindLabel.Text
+    local configItem = ConfigSystem.RegisterElement(keybindId, initialKeycode.Name, function(value)
+        bindButton.Text = value
+        if callback then
+            local keycode = Enum.KeyCode[value]
+            if keycode then callback(keycode) end
+        end
+    end)
+    
+    -- Add hover effect
+    AnimationSystem.CreateHoverEffect(bindButton, bindButton.BackgroundColor3)
+    
+    -- Waiting for input state
+    local isWaitingForInput = false
+    
+    -- Handle button click
+    bindButton.MouseButton1Click:Connect(function()
+        if isWaitingForInput then return end
+        
+        isWaitingForInput = true
+        bindButton.Text = "Press a key..."
+        
+        -- Create pulsing animation
+        local pulseAnimation = AnimationSystem.CreateTween(
+            bindButton,
+            {BackgroundColor3 = ACCENT_COLOR},
+            0.5,
+            Enum.EasingStyle.Sine,
+            Enum.EasingDirection.InOut,
+            -1,
+            true
+        )
+        pulseAnimation:Play()
+        
+        -- Capture the next key press
+        local connection
+        connection = UserInputService.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.Keyboard then
+                isWaitingForInput = false
+                pulseAnimation:Cancel()
+                connection:Disconnect()
+                
+                configItem.SetValue(input.KeyCode.Name)
+                AnimationSystem.CreateTween(bindButton, {BackgroundColor3 = Color3.fromRGB(30, 30, 35)}, 0.3):Play()
+            end
+        end)
+    end)
+    
+    -- Apply initial value
+    bindButton.Text = initialKeycode.Name
+    
+    return {
+        SetValue = function(keycode)
+            if typeof(keycode) == "EnumItem" then
+                configItem.SetValue(keycode.Name)
+            else
+                configItem.SetValue(keycode)
+            end
+        end,
+        GetValue = function()
+            return Enum.KeyCode[configItem.GetValue()]
+        end
+    }
+end
+
+function ElementSystem.SetupButton(buttonInstance, callback)
+    local clickSound = Instance.new("Sound")
+    clickSound.SoundId = "rbxassetid://6895079853" -- A nice click sound
+    clickSound.Volume = 0.5
+    clickSound.Parent = buttonInstance
+    
+    -- Add hover effect
+    AnimationSystem.CreateHoverEffect(buttonInstance, buttonInstance.BackgroundColor3)
+    
+    -- Add ripple effect
+    AnimationSystem.CreateRippleEffect(buttonInstance)
+    
+    -- Add click effect
+    buttonInstance.MouseButton1Click:Connect(function()
+        -- Play click animation
+        local originalSize = buttonInstance.Size
+        local originalPosition = buttonInstance.Position
+        
+        -- Scale down slightly
+        AnimationSystem.CreateTween(
+            buttonInstance, 
+            {
+                Size = UDim2.new(originalSize.X.Scale * 0.95, originalSize.X.Offset * 0.95, 
+                                originalSize.Y.Scale * 0.95, originalSize.Y.Offset * 0.95),
+                BackgroundColor3 = ACCENT_COLOR
+            }, 
+            0.1
+        ):Play()
+        
+        -- Return to original size with a slight delay
+        task.delay(0.1, function()
+            AnimationSystem.CreateTween(
+                buttonInstance, 
+                {
+                    Size = originalSize,
+                    BackgroundColor3 = buttonInstance.BackgroundColor3
+                }, 
+                0.1
+            ):Play()
+        end)
+        
+        -- Play sound
+        clickSound:Play()
+        
+        -- Call callback
+        if callback then
+            callback()
+        end
+    end)
+    
+    return {
+        Click = function()
+            if callback then
+                callback()
+            end
+        end
+    }
+end
+
+function ElementSystem.SetupMultiDropdown(dropdownInstance, options, initialSelections, callback)
+    local downButton = dropdownInstance:FindFirstChild("DownButton")
+    local upButton = dropdownInstance:FindFirstChild("UpButton")
+    local selectionMenu = dropdownInstance:FindFirstChild("SelectionMenu")
+    
+    initialSelections = initialSelections or {}
+    options = options or {}
+    
+    -- Register with config system
+	local dropdownId = dropdownInstance.DropdownLabel.Text
+	local configItem = nil
+	if ConfigSystem and ConfigSystem.RegisterElement then
+		configItem = ConfigSystem.RegisterElement(dropdownId, initialSelections or {}, function(value)
+			if updateOptionsFromConfig then
+				updateOptionsFromConfig(value)
+			end
+			if callback then callback(value) end
+		end)
+	else
+		warn("ConfigSystem or RegisterElement is nil!")
+		configItem = {
+			SetValue = function(value) 
+				if callback then callback(value) end 
+			end,
+			GetValue = function() return initialSelections or {} end
+		}
+	end
+    
+    -- Add hover effect
+    AnimationSystem.CreateHoverEffect(dropdownInstance, dropdownInstance.BackgroundColor3)
+    
+    -- State
+    local isOpen = false
+    
+    -- Function to update options based on config
+    function updateOptionsFromConfig(selections)
+        for _, option in pairs(selectionMenu:GetChildren()) do
+            if option:IsA("Frame") and option.Name:find("Option") then
+                local optionName = option.OptionLabel.Text
+                local toggle = option:FindFirstChild("Toggle")
+                
+                if toggle then
+                    local circle = toggle:FindFirstChild("Toggle-Circle")
+                    local isSelected = table.find(selections, optionName) ~= nil
+                    
+                    local targetPosition = isSelected and UDim2.new(0.565, 0, 0.188, 0) or UDim2.new(0.145, 0, 0.188, 0)
+                    local targetColor = isSelected and ACCENT_COLOR or Color3.fromRGB(30, 30, 35)
+                    
+                    circle.Position = targetPosition
+                    toggle.BackgroundColor3 = targetColor
+                end
+            end
+        end
+    end
+    
+    -- Clear existing options from the selection menu
+    for _, child in pairs(selectionMenu:GetChildren()) do
+        if child:IsA("Frame") and child.Name:find("Option") then
+            child:Destroy()
+        end
+    end
+    
+    -- Create option templates
+    for i, optionText in ipairs(options) do
+        local option = Instance.new("Frame")
+        option.Name = "Option_" .. optionText
+        option.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+        option.BorderSizePixel = 0
+        option.Size = UDim2.new(0, 390, 0, 50)
+        option.LayoutOrder = i
+        
+        local cornerRadius = Instance.new("UICorner")
+        cornerRadius.CornerRadius = UDim.new(0, 4)
+        cornerRadius.Parent = option
+        
+        local optionLabel = Instance.new("TextLabel")
+        optionLabel.Name = "OptionLabel"
+        optionLabel.BackgroundTransparency = 1
+        optionLabel.Position = UDim2.new(0.026, 0, 0, 0)
+        optionLabel.Size = UDim2.new(0, 200, 0, 50)
+        optionLabel.Font = Enum.Font.Unknown
+        optionLabel.Text = optionText
+        optionLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        optionLabel.TextSize = 25
+        optionLabel.TextXAlignment = Enum.TextXAlignment.Left
+        optionLabel.Parent = option
+        
+        local toggle = Instance.new("Frame")
+        toggle.Name = "Toggle"
+        toggle.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+        toggle.BorderSizePixel = 0
+        toggle.Position = UDim2.new(0.79, 0, 0.18, 0)
+        toggle.Size = UDim2.new(0, 69, 0, 32)
+        toggle.Parent = option
+        
+        local toggleCorner = Instance.new("UICorner")
+        toggleCorner.CornerRadius = UDim.new(1, 0)
+        toggleCorner.Parent = toggle
+        
+        local toggleCircle = Instance.new("Frame")
+        toggleCircle.Name = "Toggle-Circle"
+        toggleCircle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        toggleCircle.BorderSizePixel = 0
+        toggleCircle.Position = UDim2.new(0.145, 0, 0.188, 0)
+        toggleCircle.Size = UDim2.new(0, 20, 0, 20)
+        toggleCircle.Parent = toggle
+        
+        local circleCorner = Instance.new("UICorner")
+        circleCorner.CornerRadius = UDim.new(1, 0)
+        circleCorner.Parent = toggleCircle
+        
+        option.Parent = selectionMenu
+        
+        -- Set up toggle
+        local isSelected = table.find(initialSelections, optionText) ~= nil
+        
+        ElementSystem.SetupToggle(option, isSelected, function(state)
+            local selections = configItem.GetValue()
+            
+            if state then
+                if not table.find(selections, optionText) then
+                    table.insert(selections, optionText)
+                end
+            else
+                local index = table.find(selections, optionText)
+                if index then
+                    table.remove(selections, index)
+                end
+            end
+            
+            configItem.SetValue(selections)
+        end)
+    end
+    
+    -- Toggle dropdown visibility
+    local isAnimating = false -- Add this for tracking animation state
+
+	local function toggleDropdown()
+		local isAnimating = false
+		
+		-- Don't allow toggling while an animation is in progress
+		if isAnimating then
+			return
+		end
+		
+		isAnimating = true
+		isOpen = not isOpen
+		
+		-- Toggle button visibility
+		downButton.Visible = not isOpen
+		upButton.Visible = isOpen
+		
+		-- Animate selection menu
+		if isOpen then
+			selectionMenu.Size = UDim2.new(1, 0, 0, 0)
+			selectionMenu.Visible = true
+			selectionMenu.ZIndex = 100 -- Set a high ZIndex when open
+			
+			-- Make all children have high ZIndex too
+			for _, child in pairs(selectionMenu:GetChildren()) do
+				if child:IsA("Frame") then
+					child.ZIndex = 100
+					for _, subchild in pairs(child:GetDescendants()) do
+						if subchild:IsA("GuiObject") and not subchild:IsA("UIListLayout") and not subchild:IsA("UIPadding") then
+							subchild.ZIndex = 100
+						end
+					end
+				end
+			end
+			
+			-- Calculate proper size based on content
+			local totalSize = 0
+			for _, child in pairs(selectionMenu:GetChildren()) do
+				if child:IsA("Frame") then
+					totalSize = totalSize + child.Size.Y.Offset + selectionMenu.UIListLayout.Padding.Offset
+				end
+			end
+			
+			-- Animate opening
+			local openTween = AnimationSystem.CreateTween(
+				selectionMenu,
+				{Size = UDim2.new(1, 0, 0, totalSize)},
+				0.3,
+				Enum.EasingStyle.Quart,
+				Enum.EasingDirection.Out
+			)
+			
+			openTween.Completed:Connect(function()
+				isAnimating = false
+			end)
+			
+			openTween:Play()
+		else
+			-- Animate closing
+			local closeTween = AnimationSystem.CreateTween(
+				selectionMenu,
+				{Size = UDim2.new(1, 0, 0, 0)},
+				0.3,
+				Enum.EasingStyle.Quart,
+				Enum.EasingDirection.In
+			)
+			
+			closeTween.Completed:Connect(function()
+				selectionMenu.Visible = false
+				selectionMenu.ZIndex = 1 -- Reset ZIndex when closed
+				
+				-- Reset ZIndex for all children
+				for _, child in pairs(selectionMenu:GetChildren()) do
+					if child:IsA("Frame") then
+						child.ZIndex = 1
+						for _, subchild in pairs(child:GetDescendants()) do
+							if subchild:IsA("GuiObject") and not subchild:IsA("UIListLayout") and not subchild:IsA("UIPadding") then
+								subchild.ZIndex = 1
+							end
+						end
+					end
+				end
+				
+				isAnimating = false
+			end)
+			
+			closeTween:Play()
+		end
+	end	
+    
+    -- Connect button clicks
+    downButton.MouseButton1Click:Connect(toggleDropdown)
+    upButton.MouseButton1Click:Connect(toggleDropdown)
+    
+    -- Add click to dropdown header
+    -- Frames don't have MouseButton1Click, so we need to use InputBegan instead
+	dropdownInstance.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			toggleDropdown()
+		end
+	end)
+    
+    -- Apply initial selections
+    updateOptionsFromConfig(initialSelections)
+    
+    return {
+        SetValue = function(selections)
+            configItem.SetValue(selections)
+        end,
+        GetValue = function()
+            return configItem.GetValue()
+        end,
+        AddOption = function(optionText)
+            if not table.find(options, optionText) then
+                table.insert(options, optionText)
+                
+                local option = Instance.new("Frame")
+                option.Name = "Option_" .. optionText
+                option.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+                option.BorderSizePixel = 0
+                option.Size = UDim2.new(0, 390, 0, 50)
+                option.LayoutOrder = #options
+                
+                local cornerRadius = Instance.new("UICorner")
+                cornerRadius.CornerRadius = UDim.new(0, 4)
+                cornerRadius.Parent = option
+                
+                local optionLabel = Instance.new("TextLabel")
+                optionLabel.Name = "OptionLabel"
+                optionLabel.BackgroundTransparency = 1
+                optionLabel.Position = UDim2.new(0.026, 0, 0, 0)
+                optionLabel.Size = UDim2.new(0, 200, 0, 50)
+                optionLabel.Font = Enum.Font.Unknown
+                optionLabel.Text = optionText
+                optionLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+                optionLabel.TextSize = 25
+                optionLabel.TextXAlignment = Enum.TextXAlignment.Left
+                optionLabel.Parent = option
+                
+                local toggle = Instance.new("Frame")
+                toggle.Name = "Toggle"
+                toggle.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+                toggle.BorderSizePixel = 0
+                toggle.Position = UDim2.new(0.79, 0, 0.18, 0)
+                toggle.Size = UDim2.new(0, 69, 0, 32)
+                toggle.Parent = option
+                
+                local toggleCorner = Instance.new("UICorner")
+                toggleCorner.CornerRadius = UDim.new(1, 0)
+                toggleCorner.Parent = toggle
+                
+                local toggleCircle = Instance.new("Frame")
+                toggleCircle.Name = "Toggle-Circle"
+                toggleCircle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                toggleCircle.BorderSizePixel = 0
+                toggleCircle.Position = UDim2.new(0.145, 0, 0.188, 0)
+                toggleCircle.Size = UDim2.new(0, 20, 0, 20)
+                toggleCircle.Parent = toggle
+                
+                local circleCorner = Instance.new("UICorner")
+                circleCorner.CornerRadius = UDim.new(1, 0)
+                circleCorner.Parent = toggleCircle
+                
+                option.Parent = selectionMenu
+                
+                ElementSystem.SetupToggle(option, false, function(state)
+                    local selections = configItem.GetValue()
+                    
+                    if state then
+                        if not table.find(selections, optionText) then
+                            table.insert(selections, optionText)
+                        end
+                    else
+                        local index = table.find(selections, optionText)
+                        if index then
+                            table.remove(selections, index)
+                        end
+                    end
+                    
+                    configItem.SetValue(selections)
+                end)
+            end
+        end,
+        RemoveOption = function(optionText)
+            local index = table.find(options, optionText)
+            if index then
+                table.remove(options, index)
+                
+                local option = selectionMenu:FindFirstChild("Option_" .. optionText)
+                if option then
+                    option:Destroy()
+                end
+                
+                -- Remove from selections if selected
+                local selections = configItem.GetValue()
+                local selectedIndex = table.find(selections, optionText)
+                if selectedIndex then
+                    table.remove(selections, selectedIndex)
+                    configItem.SetValue(selections)
+                end
+            end
+        end
+    }
+end
+
+function ElementSystem.SetupLabel(labelInstance, text)
+    local textLabel = labelInstance:FindFirstChild("Textlabel")
+    textLabel.Text = text or "Label"
+    
+    return {
+        SetText = function(newText)
+            textLabel.Text = newText
+        end,
+        GetText = function()
+            return textLabel.Text
+        end
+    }
+end
+
+-- UI Dragging System
+local DragSystem = {}
+
+function DragSystem.MakeDraggable(frame)
+    local dragToggle = nil
+    local dragSpeed = 0.1
+    local dragInput = nil
+    local dragStart = nil
+    local dragPos = nil
+    local startPos = nil
+    
+    local function updateInput(input)
+        local delta = input.Position - dragStart
+        local position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
+                                   startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        
+        AnimationSystem.CreateTween(frame, {Position = position}, dragSpeed, Enum.EasingStyle.Sine):Play()
+    end
+    
+    -- Function to check if the cursor is over a clickable element
+    local function isOverClickableElement()
+        local mouse = game:GetService("Players").LocalPlayer:GetMouse()
+        local target = mouse.Target
+        
+        if not target then return false end
+        
+        -- Check if the target or its ancestors are clickable elements
+        local current = target
+        while current and current ~= frame do
+            if current:IsA("TextButton") or current:IsA("ImageButton") or 
+               current:IsA("TextBox") or current:FindFirstChildOfClass("Slider") or
+               current.Name == "Toggle" then
+                return true
+            end
+            current = current.Parent
+        end
+        
+        return false
+    end
+    
+    frame.InputBegan:Connect(function(input)
+        if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and not isOverClickableElement() then
+            dragToggle = true
+            dragStart = input.Position
+            startPos = frame.Position
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragToggle = false
+                end
+            end)
+        end
+    end)
+    
+    frame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragToggle then
+            updateInput(input)
+        end
+    end)
+end
+
+-- Main UI Library Interface
+local UILibrary = {}
+
+function UILibrary.Initialize()
+    -- Apply accent color to elements
+    for _, element in pairs(ContentFrame:GetDescendants()) do
+        if element.Name == "Toggle" and element.BackgroundColor3 ~= Color3.fromRGB(30, 30, 35) then
+            element.BackgroundColor3 = ACCENT_COLOR
+        elseif element.Name == "SlideFill" then
+            element.BackgroundColor3 = ACCENT_COLOR
+        end
+    end
+    
+    -- Setup tab system
+    TabSystem.Initialize()
+    
+    -- Initialize config system
+    ConfigSystem.Initialize()
+    
+    -- Make UI draggable
+    DragSystem.MakeDraggable(UIHolder)
+    
+    -- Initial notification
+    ShowNotification("Initialized", "UI Library successfully loaded!", ACCENT_COLOR)
+    
+    -- Return the instance of our library
+    return UILibrary
+end
+
+-- Functions to create/add elements
+function UILibrary.AddToggle(tabName, name, initialState, callback)
+    if not TabSystem.Tabs[tabName] or not TabSystem.Tabs[tabName].Content then
+        return nil
+    end
+    
+    -- Clone the toggle template
+    local toggle = ContentFrame.ToggleOn:Clone()
+    toggle.Name = "Toggle_" .. name
+    toggle.ToggleLabel.Text = name
+    toggle.LayoutOrder = #TabSystem.Tabs[tabName].Content:GetChildren()
+    toggle.Parent = TabSystem.Tabs[tabName].Content
+    toggle.Visible = true
+    
+    -- Setup the toggle
+    return ElementSystem.SetupToggle(toggle, initialState, callback)
+end
+
+function UILibrary.AddSlider(tabName, name, min, max, initialValue, callback)
+    if not TabSystem.Tabs[tabName] or not TabSystem.Tabs[tabName].Content then
+        return nil
+    end
+    
+    -- Clone the slider template
+    local slider = ContentFrame.Slider:Clone()
+    slider.Name = "Slider_" .. name
+    slider.SlideLabel.Text = name
+    slider.LayoutOrder = #TabSystem.Tabs[tabName].Content:GetChildren()
+    slider.Parent = TabSystem.Tabs[tabName].Content
+    slider.Visible = true
+    
+    -- Setup the slider
+    return ElementSystem.SetupSlider(slider, min, max, initialValue, callback)
+end
+
+function UILibrary.AddTextbox(tabName, name, initialValue, callback)
+    if not TabSystem.Tabs[tabName] or not TabSystem.Tabs[tabName].Content then
+        return nil
+    end
+    
+    -- Clone the textbox template
+    local textbox = ContentFrame.Textbox:Clone()
+    textbox.Name = "Textbox_" .. name
+    textbox.TextboxLabel.Text = name
+    textbox.LayoutOrder = #TabSystem.Tabs[tabName].Content:GetChildren()
+    textbox.Parent = TabSystem.Tabs[tabName].Content
+    textbox.Visible = true
+    
+    -- Setup the textbox
+    return ElementSystem.SetupTextbox(textbox, initialValue, callback)
+end
+
+function UILibrary.AddKeybind(tabName, name, initialKeycode, callback)
+    if not TabSystem.Tabs[tabName] or not TabSystem.Tabs[tabName].Content then
+        return nil
+    end
+    
+    -- Clone the keybind template
+    local keybind = ContentFrame.Keybind:Clone()
+    keybind.Name = "Keybind_" .. name
+    keybind.KeybindLabel.Text = name
+    keybind.LayoutOrder = #TabSystem.Tabs[tabName].Content:GetChildren()
+    keybind.Parent = TabSystem.Tabs[tabName].Content
+    keybind.Visible = true
+    
+    -- Setup the keybind
+    return ElementSystem.SetupKeybind(keybind, initialKeycode, callback)
+end
+
+function UILibrary.AddButton(tabName, name, callback)
+    if not TabSystem.Tabs[tabName] or not TabSystem.Tabs[tabName].Content then
+        return nil
+    end
+    
+    -- Clone the button template
+    local button = ContentFrame.Button:Clone()
+    button.Name = "Button_" .. name
+    button.ButtonLabel.Text = name
+    button.LayoutOrder = #TabSystem.Tabs[tabName].Content:GetChildren()
+    button.Parent = TabSystem.Tabs[tabName].Content
+    button.Visible = true
+    
+    -- Setup the button
+    return ElementSystem.SetupButton(button, callback)
+end
+
+function UILibrary.AddDropdown(tabName, name, options, initialSelections, callback)
+    if not TabSystem.Tabs[tabName] or not TabSystem.Tabs[tabName].Content then
+        return nil
+    end
+    
+    -- Clone the dropdown template
+    local dropdown = ContentFrame["Multi-Dropdown"]:Clone()
+    dropdown.Name = "Dropdown_" .. name
+    dropdown.DropdownLabel.Text = name
+    dropdown.LayoutOrder = #TabSystem.Tabs[tabName].Content:GetChildren()
+    dropdown.Parent = TabSystem.Tabs[tabName].Content
+    dropdown.Visible = true
+    
+    -- Setup the dropdown
+    return ElementSystem.SetupMultiDropdown(dropdown, options, initialSelections, callback)
+end
+
+function UILibrary.AddLabel(tabName, name, text)
+    if not TabSystem.Tabs[tabName] or not TabSystem.Tabs[tabName].Content then
+        return nil
+    end
+    
+    -- Clone the label template
+    local label = ContentFrame.Label:Clone()
+    label.Name = "Label_" .. name
+    label.Textlabel.Text = text or name
+    label.LayoutOrder = #TabSystem.Tabs[tabName].Content:GetChildren()
+    label.Parent = TabSystem.Tabs[tabName].Content
+    label.Visible = true
+    
+    -- Setup the label
+    return ElementSystem.SetupLabel(label, text)
+end
+
+-- Config management
+function UILibrary.SaveConfig(configName)
+    return ConfigSystem.SaveConfig(configName or DEFAULT_CONFIG_NAME)
+end
+
+function UILibrary.LoadConfig(configName)
+    return ConfigSystem.LoadConfig(configName or DEFAULT_CONFIG_NAME)
+end
+
+function UILibrary.ExportConfig(configName)
+    return ConfigSystem.ExportConfig(configName or DEFAULT_CONFIG_NAME)
+end
+
+function UILibrary.ImportConfig()
+    return ConfigSystem.ImportConfig()
+end
+
+function UILibrary.ListConfigs()
+    return ConfigSystem.ListConfigs()
+end
+
+-- Notification system
+function UILibrary.Notify(title, description, color)
+    ShowNotification(title, description, color or ACCENT_COLOR)
+end
+
+-- Tab selection
+function UILibrary.SelectTab(tabName)
+    TabSystem.SelectTab(tabName)
+end
+
+-- Set up config tab with save/load functionality
+function UILibrary.SetupConfigTab()
+    -- Add a label at the top
+    UILibrary.AddLabel("Home", "ConfigHeader", "Configuration System")
+    
+    -- Add a textbox for config name
+    local configNameBox = UILibrary.AddTextbox("Home", "Config Name", "MyConfig")
+    
+    -- Add save and load buttons
+    UILibrary.AddButton("Home", "Save Config", function()
+        local configName = configNameBox.GetValue()
+        if configName and configName ~= "" then
+            UILibrary.SaveConfig(configName)
+        else
+            UILibrary.Notify("Error", "Please enter a config name", Color3.fromRGB(255, 0, 0))
+        end
+    end)
+    
+    UILibrary.AddButton("Home", "Load Config", function()
+        local configName = configNameBox.GetValue()
+        if configName and configName ~= "" then
+            UILibrary.LoadConfig(configName)
+        else
+            UILibrary.Notify("Error", "Please enter a config name", Color3.fromRGB(255, 0, 0))
+        end
+    end)
+    
+    -- Add dropdown for existing configs
+    local configList = UILibrary.ListConfigs()
+    
+    -- Check if configList is not nil before using it
+    if configList then
+        UILibrary.AddDropdown("Home", "Existing Configs", configList, {}, function(selections)
+            if selections and #selections > 0 then
+                configNameBox.SetValue(selections[1])
+            end
+        end)
+    else
+        UILibrary.AddLabel("Home", "NoConfigsLabel", "No existing configs found")
+    end
+    
+    -- Import/Export buttons
+    UILibrary.AddButton("Home", "Export Config", function()
+        local configName = configNameBox.GetValue()
+        if configName and configName ~= "" then
+            UILibrary.ExportConfig(configName)
+        else
+            UILibrary.Notify("Error", "Please enter a config name", Color3.fromRGB(255, 0, 0))
+        end
+    end)
+    
+    UILibrary.AddButton("Home", "Import Config", function()
+        UILibrary.ImportConfig()
+    end)
+end
+
+-- Utility functions
+function UILibrary.SetAccentColor(color)
+    ACCENT_COLOR = color
+    
+    -- Update all elements with the accent color
+    for _, element in pairs(game:GetDescendants()) do
+        if element.Name == "Toggle" and element.BackgroundColor3 ~= Color3.fromRGB(30, 30, 35) then
+            element.BackgroundColor3 = ACCENT_COLOR
+        elseif element.Name == "SlideFill" then
+            element.BackgroundColor3 = ACCENT_COLOR
+        end
+    end
+    
+    UILibrary.Notify("Color Changed", "Accent color updated", ACCENT_COLOR)
+end
+
+-- Keybind handling utility
+function UILibrary.SetupGlobalKeybind(keycodeEnum, callback)
+    UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
+        if not gameProcessedEvent and input.KeyCode == keycodeEnum then
+            if callback then callback() end
+        end
+    end)
+end
+
+-- Initialize the UI system
+local uiLibrary = UILibrary.Initialize()
+
+-- Setup config tab by default
+uiLibrary.SetupConfigTab()
+
+-- Create example elements
+uiLibrary.AddToggle("Home", "Example Toggle", false, function(value)
+    uiLibrary.Notify("Toggle Changed", "Value is now " .. tostring(value), ACCENT_COLOR)
+end)
+
+-- Example slider
+uiLibrary.AddSlider("Home", "Example Slider", 0, 100, 50, function(value)
+    -- This function is called when the slider value changes
+end)
+
+-- Example button
+uiLibrary.AddButton("Home", "Example Button", function()
+    uiLibrary.Notify("Button Clicked", "You clicked the example button", ACCENT_COLOR)
+end)
+
+-- Example dropdown
+uiLibrary.AddDropdown("Home", "Example Dropdown", {"Option 1", "Option 2", "Option 3"}, {"Option 1"}, function(selections)
+    uiLibrary.Notify("Selection Changed", "Selected: " .. table.concat(selections, ", "), ACCENT_COLOR)
+end)
+
+-- Example keybind
+uiLibrary.AddKeybind("Home", "Example Keybind", Enum.KeyCode.F, function(keycode)
+    uiLibrary.Notify("Keybind Pressed", "You pressed the keybind", ACCENT_COLOR)
+end)
+
+-- Example textbox
+uiLibrary.AddTextbox("Home", "Example Textbox", "Type here", function(text)
+    uiLibrary.Notify("Text Changed", "New text: " .. text, ACCENT_COLOR)
+end)
+
+-- Set up UI visibility toggle (Right Control key to show/hide UI)
+uiLibrary.SetupGlobalKeybind(Enum.KeyCode.RightControl, function()
+    UIHolder.Visible = not UIHolder.Visible
+    uiLibrary.Notify("UI Toggled", UIHolder.Visible and "UI shown" or "UI hidden", ACCENT_COLOR)
+end)
+
+-- Show initial notification
+uiLibrary.Notify("Ready", "UI has been initialized! Press Right Control to toggle UI visibility.", Color3.fromRGB(0, 255, 0))
+
+-- Make the UI visible after initialization
+UIHolder.Visible = true
+
+-- Return the library for use
+return uiLibrary
