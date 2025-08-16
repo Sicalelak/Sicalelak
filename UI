@@ -4016,7 +4016,76 @@ function SaveManager:BuildConfigSection(tab)
     self:SetupFolders()
     self:RefreshConfigList()
     
-    return Section
+    local ConfigSection = tab:AddSection("Configuration", "left")
+    
+    -- Config name input
+    local configNameInput = ""
+    ConfigSection:AddInputLetterAdd({
+        Name = "Config Name",
+        Default = "my_config",
+        PlaceholderText = "Enter config name...",
+        Callback = function(text)
+            configNameInput = text
+        end,
+        Flag = "config_name_input"
+    })
+    
+    -- Save config button
+    ConfigSection:AddButton({
+        Name = "Save Config",
+        Callback = function()
+            if configNameInput and configNameInput ~= "" then
+                self:SaveConfig(configNameInput)
+            else
+                self:SaveConfig("default")
+            end
+        end
+    })
+    
+    -- Load config dropdown
+    local ConfigDropdown = ConfigSection:AddDropdown({
+        Name = "Load Config",
+        Items = self:RefreshConfigList(),
+        MultiSelect = false,
+        Callback = function(selected)
+            if selected then
+                self:LoadConfig(selected)
+            end
+        end,
+        Flag = "config_dropdown"
+    })
+    
+    -- Delete config button
+    ConfigSection:AddButton({
+        Name = "Delete Config",
+        Callback = function()
+            local selectedConfig = ConfigDropdown:GetValue()
+            if selectedConfig and selectedConfig ~= "default" then
+                self:DeleteConfig(selectedConfig)
+                ConfigDropdown:Refresh(self:RefreshConfigList())
+            end
+        end
+    })
+    
+    -- Auto-save toggle
+    ConfigSection:AddToggle({
+        Name = "Auto Save",
+        Default = self.ConfigurationSaving.AutoSave,
+        Callback = function(value)
+            self.ConfigurationSaving.AutoSave = value
+        end,
+        Flag = "auto_save_toggle"
+    })
+    
+    -- Refresh configs button
+    ConfigSection:AddButton({
+        Name = "Refresh List",
+        Callback = function()
+            ConfigDropdown:Refresh(self:RefreshConfigList())
+        end
+    })
+    
+    return ConfigSection
 end
 
 -- Save current configuration
@@ -4224,7 +4293,7 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- Ensure all components are properly attached
+-- Ensure SaveManager is accessible through Library
 Library.SaveManager = SaveManager
 
 -- Make the library globally accessible for loadstring usage
