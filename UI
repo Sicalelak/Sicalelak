@@ -241,7 +241,7 @@ function Library:CreateWindow()
         Position = UDim2.new(0, 0, 0, 30),
         Size = UDim2.new(0, 150, 1, -30)
     })
-    
+
     local ContentContainer = Create("Frame", {
         Name = "ContentContainer",
         Parent = Main,
@@ -333,9 +333,12 @@ function Library:CreateWindow()
     
     local Tabs = {}
     local ActiveTab = nil
+
+    -- Create the Window object that will be returned
+    local WindowObject = {}
     
     -- Tab creation function
-    function Library:CreateTab(name, icon)
+    function WindowObject:CreateTab(name, icon)
         local TabButton = Create("TextButton", {
             Name = name.."Button",
             Parent = TabButtons,
@@ -4036,7 +4039,7 @@ function Library:CreateWindow()
 
     --------------------------------------------------------------------------------------------------------------------------------------------------
     
-    return Main
+    return WindowObject
 end
 
 -- Enhanced Save System Implementation
