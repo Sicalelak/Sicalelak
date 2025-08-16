@@ -98,7 +98,7 @@ function Library:CreateWindow()
         BackgroundTransparency = 1,
         Position = UDim2.new(0, 8, 0, 8),
         Size = UDim2.new(0, 16, 0, 16),
-        Image = "rbxassetid://3057073095", -- Star icon, replace with appropriate asset ID
+        Image = "rbxassetid://5639840621", -- Star icon, replace with appropriate asset ID
         ImageColor3 = Color3.fromRGB(255, 255, 255)
     })
     
