@@ -1123,15 +1123,28 @@ function Library:CreateWindow()
                 
                 -- Refresh dropdown with new items
                 function DropdownFunctions:Refresh(newItems)
-                    items = newItems or items
+                    if not newItems or type(newItems) ~= "table" then
+                        return self
+                    end
+                    
+                    items = newItems
                     
                     -- If dropdown is open, close it first
                     if dropped then
                         ToggleDropdown()
+                        -- Wait a bit for the close animation to complete
+                        task.wait(0.1)
                     end
                     
-                    -- Recreate dropdown items
-                    CreateDropdownItems()
+                    -- Clear existing items first
+                    for _, child in pairs(ItemsFrame:GetChildren()) do
+                        if child:IsA("TextButton") or child:IsA("Frame") then
+                            child:Destroy()
+                        end
+                    end
+                    
+                    -- Wait for cleanup
+                    task.wait(0.05)
                     
                     -- Update selected items if they no longer exist
                     local validSelections = {}
@@ -1150,7 +1163,14 @@ function Library:CreateWindow()
                     end
                     
                     selectedItems = validSelections
+                    
+                    -- Recreate dropdown items
+                    CreateDropdownItems()
+                    
+                    -- Update display text
                     UpdateDisplayText()
+                    
+                    print("Dropdown refreshed with", #items, "items")
                     
                     return self
                 end
@@ -2871,15 +2891,28 @@ function Library:CreateWindow()
                 
                 -- Refresh dropdown with new items
                 function DropdownFunctions:Refresh(newItems)
-                    items = newItems or items
+                    if not newItems or type(newItems) ~= "table" then
+                        return self
+                    end
+                    
+                    items = newItems
                     
                     -- If dropdown is open, close it first
                     if dropped then
                         ToggleDropdown()
+                        -- Wait a bit for the close animation to complete
+                        task.wait(0.1)
                     end
                     
-                    -- Recreate dropdown items
-                    CreateDropdownItems()
+                    -- Clear existing items first
+                    for _, child in pairs(ItemsFrame:GetChildren()) do
+                        if child:IsA("TextButton") or child:IsA("Frame") then
+                            child:Destroy()
+                        end
+                    end
+                    
+                    -- Wait for cleanup
+                    task.wait(0.05)
                     
                     -- Update selected items if they no longer exist
                     local validSelections = {}
@@ -2898,7 +2931,14 @@ function Library:CreateWindow()
                     end
                     
                     selectedItems = validSelections
+                    
+                    -- Recreate dropdown items
+                    CreateDropdownItems()
+                    
+                    -- Update display text
                     UpdateDisplayText()
+                    
+                    print("Dropdown refreshed with", #items, "items")
                     
                     return self
                 end
