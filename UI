@@ -120,12 +120,14 @@ function Library:CreateWindow()
         Parent = TopBar,
         BackgroundTransparency = 1,
         Position = UDim2.new(0, 160, 0, 0),
-        Size = UDim2.new(0, 100, 1, 0),
+        Size = UDim2.new(1, -170, 1, 0), -- Take remaining space minus padding
         Font = Enum.Font.GothamBold,
         Text = "", -- Will be updated when first tab is created
         TextColor3 = Color3.fromRGB(255, 255, 255),
         TextSize = 14,
-        TextXAlignment = Enum.TextXAlignment.Left
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextYAlignment = Enum.TextYAlignment.Center,
+        TextTruncate = Enum.TextTruncate.AtEnd
     })
     
     local ResizeHandle = Create("TextButton", {
@@ -258,8 +260,8 @@ function Library:CreateWindow()
         Active = true,
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
-        Position = UDim2.new(0, 0, 0, 0),
-        Size = UDim2.new(1, 0, 1, -50), -- Leave space for the user profile at bottom
+        Position = UDim2.new(0, 0, 0, 55), -- Start below user profile and separator
+        Size = UDim2.new(1, 0, 1, -55), -- Take remaining space
         CanvasSize = UDim2.new(0, 0, 0, 0),
         ScrollBarThickness = 0,
         AutomaticCanvasSize = Enum.AutomaticSize.Y
@@ -277,21 +279,12 @@ function Library:CreateWindow()
         PaddingTop = UDim.new(0, 10)
     })
 
-    -- Add separator line below title in sidebar
-    local TitleSeparator = Create("Frame", {
-        Name = "TitleSeparator",
-        Parent = Sidebar,
-        BackgroundColor3 = Color3.fromRGB(45, 45, 50),
-        BorderSizePixel = 0,
-        Position = UDim2.new(0, 10, 0, 30),
-        Size = UDim2.new(1, -20, 0, 1)
-    })
-    
+-- User profile section at the top of sidebar
     local UserProfile = Create("Frame", {
         Name = "UserProfile",
         Parent = Sidebar,
         BackgroundTransparency = 1,
-        Position = UDim2.new(0, 0, 1, -50),
+        Position = UDim2.new(0, 0, 0, 0),
         Size = UDim2.new(1, 0, 0, 50)
     })
     
@@ -299,7 +292,7 @@ function Library:CreateWindow()
         Name = "Avatar",
         Parent = UserProfile,
         BackgroundTransparency = 1,
-        Position = UDim2.new(0, 15, 0.5, -15),
+        Position = UDim2.new(0, 10, 0.5, -15),
         Size = UDim2.new(0, 30, 0, 30),
         Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
     })
@@ -313,22 +306,42 @@ function Library:CreateWindow()
         Name = "Username",
         Parent = UserProfile,
         BackgroundTransparency = 1,
-        Position = UDim2.new(0, 55, 0, 0),
-        Size = UDim2.new(1, -65, 1, 0),
+        Position = UDim2.new(0, 50, 0, 0),
+        Size = UDim2.new(1, -60, 1, 0),
         Font = Enum.Font.GothamBold,
         Text = LocalPlayer.Name,
         TextColor3 = Color3.fromRGB(255, 255, 255),
-        TextSize = 14,
-        TextXAlignment = Enum.TextXAlignment.Left
+        TextSize = 12,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextYAlignment = Enum.TextYAlignment.Center,
+        TextTruncate = Enum.TextTruncate.AtEnd
+    })
+    
+    -- Add separator line below user profile
+    local TitleSeparator = Create("Frame", {
+        Name = "TitleSeparator",
+        Parent = Sidebar,
+        BackgroundColor3 = Color3.fromRGB(45, 45, 50),
+        BorderSizePixel = 0,
+        Position = UDim2.new(0, 10, 0, 50),
+        Size = UDim2.new(1, -20, 0, 1)
     })
     
     spawn(function()
-        -- Set player avatar
-        local userId = LocalPlayer.UserId
-        local thumbType = Enum.ThumbnailType.HeadShot
-        local thumbSize = Enum.ThumbnailSize.Size420x420
-        local content, isReady = Players:GetUserThumbnailAsync(userId, thumbType, thumbSize)
-        Avatar.Image = content
+        -- Set player avatar with error handling
+        local success, result = pcall(function()
+            local userId = LocalPlayer.UserId
+            local thumbType = Enum.ThumbnailType.HeadShot
+            local thumbSize = Enum.ThumbnailSize.Size420x420
+            return Players:GetUserThumbnailAsync(userId, thumbType, thumbSize)
+        end)
+        
+        if success and result then
+            Avatar.Image = result
+        else
+            -- Fallback to default avatar if loading fails
+            Avatar.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
+        end
     end)
     
     local Tabs = {}
