@@ -3971,6 +3971,7 @@ SaveManager = {}
 SaveManager.Folder = "CaelusV3/Configs"
 SaveManager.ConfigList = {}
 SaveManager.CurrentConfig = "default"
+SaveManager.SelectedConfig = ""
 SaveManager.ConfigurationSaving = {
     Enabled = true,
     AutoSave = true
@@ -3986,21 +3987,34 @@ function SaveManager:SetupFolders()
     end
 end
 
--- Get a list of all saved configs
+-- Get a list of all saved configs (optimized to prevent freezing)
 function SaveManager:RefreshConfigList()
-    self.ConfigList = {}
+    local newConfigList = {}
     
-    local success, files = pcall(function()
-        return listfiles(self.Folder)
+    local success, result = pcall(function()
+        if not isfolder(self.Folder) then
+            self:SetupFolders()
+            return {}
+        end
+        
+        local files = listfiles(self.Folder)
+        local configs = {}
+        
+        for _, file in ipairs(files) do
+            local fileName = string.match(file, "[^/\\]+$")
+            if fileName and string.match(fileName, "%.json$") then
+                fileName = string.gsub(fileName, "%.json$", "")
+                table.insert(configs, fileName)
+            end
+        end
+        
+        return configs
     end)
     
-    if success then
-        for _, file in ipairs(files) do
-            -- Extract just the filename without extension
-            local fileName = string.match(file, "[^/\\]+$")
-            fileName = string.gsub(fileName, "%.json$", "")
-            table.insert(self.ConfigList, fileName)
-        end
+    if success and result then
+        self.ConfigList = result
+    else
+        self.ConfigList = {}
     end
     
     return self.ConfigList
@@ -4011,59 +4025,169 @@ function SaveManager:RegisterFlag(flag, element)
     Library.Flags[flag] = element
 end
 
+-- Show notification helper
+function SaveManager:ShowNotification(message, color)
+    color = color or Color3.fromRGB(40, 40, 45)
+    
+    local coreGui = game:GetService("CoreGui"):FindFirstChild("CaelusV3")
+    if not coreGui then return end
+    
+    local notification = Create("Frame", {
+        Name = "ConfigNotification",
+        Parent = coreGui,
+        BackgroundColor3 = color,
+        BorderSizePixel = 0,
+        Position = UDim2.new(1, -220, 1, -60),
+        Size = UDim2.new(0, 200, 0, 50),
+        AnchorPoint = Vector2.new(0, 1),
+        ZIndex = 10
+    })
+    
+    local NotifCorner = Create("UICorner", {
+        CornerRadius = UDim.new(0, 6),
+        Parent = notification
+    })
+    
+    local NotifText = Create("TextLabel", {
+        Name = "Text",
+        Parent = notification,
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 10, 0, 0),
+        Size = UDim2.new(1, -20, 1, 0),
+        Font = Enum.Font.Gotham,
+        Text = message,
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextSize = 14,
+        TextWrapped = true,
+        ZIndex = 11
+    })
+    
+    -- Animate notification
+    TweenService:Create(notification, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {Position = UDim2.new(1, -220, 1, -70)}):Play()
+    
+    -- Remove notification after delay
+    task.delay(2.5, function()
+        if notification and notification.Parent then
+            TweenService:Create(notification, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {Position = UDim2.new(1, -220, 1, 0)}):Play()
+            task.delay(0.3, function()
+                if notification and notification.Parent then
+                    notification:Destroy()
+                end
+            end)
+        end
+    end)
+end
+
 -- Build the configuration UI section
 function SaveManager:BuildConfigSection(tab)
     self:SetupFolders()
-    self:RefreshConfigList()
+    local configList = self:RefreshConfigList()
     
     local ConfigSection = tab:AddSection("Configuration", "left")
     
     -- Config name input
-    local configNameInput = ""
-    ConfigSection:AddInputLetterAdd({
+    local configNameInput = "my_config"
+    local ConfigNameInput = ConfigSection:AddInputLetterAdd({
         Name = "Config Name",
         Default = "my_config",
         PlaceholderText = "Enter config name...",
+        MaxLength = 30,
         Callback = function(text)
             configNameInput = text
         end,
         Flag = "config_name_input"
     })
     
+    -- Config selector dropdown (no callback, just for selection)
+    local ConfigDropdown = ConfigSection:AddDropdown({
+        Name = "Select Config",
+        Items = configList,
+        MultiSelect = false,
+        DefaultSelections = {},
+        Callback = function(selected)
+            if selected and selected ~= "" then
+                self.SelectedConfig = selected
+                -- Update the input field with selected config name
+                ConfigNameInput:Set(selected)
+                configNameInput = selected
+            else
+                self.SelectedConfig = ""
+            end
+        end,
+        Flag = "config_selector"
+    })
+    
     -- Save config button
     ConfigSection:AddButton({
         Name = "Save Config",
         Callback = function()
-            if configNameInput and configNameInput ~= "" then
-                self:SaveConfig(configNameInput)
+            local nameToSave = configNameInput
+            if not nameToSave or nameToSave == "" or nameToSave:match("^%s*$") then
+                self:ShowNotification("Please enter a valid config name!", Color3.fromRGB(200, 100, 100))
+                return
+            end
+            
+            -- Clean the name
+            nameToSave = nameToSave:gsub("[^%w%-%_]", "")
+            if nameToSave == "" then
+                self:ShowNotification("Config name contains invalid characters!", Color3.fromRGB(200, 100, 100))
+                return
+            end
+            
+            self:SaveConfig(nameToSave)
+            
+            -- Refresh dropdown after saving
+            task.wait(0.1)
+            local newList = self:RefreshConfigList()
+            ConfigDropdown:Refresh(newList)
+        end
+    })
+    
+    -- Load config button
+    ConfigSection:AddButton({
+        Name = "Load Selected Config",
+        Callback = function()
+            if self.SelectedConfig and self.SelectedConfig ~= "" then
+                self:LoadConfig(self.SelectedConfig)
             else
-                self:SaveConfig("default")
+                self:ShowNotification("Please select a config to load!", Color3.fromRGB(200, 100, 100))
             end
         end
     })
     
-    -- Load config dropdown
-    local ConfigDropdown = ConfigSection:AddDropdown({
-        Name = "Load Config",
-        Items = self:RefreshConfigList(),
-        MultiSelect = false,
-        Callback = function(selected)
-            if selected then
-                self:LoadConfig(selected)
-            end
-        end,
-        Flag = "config_dropdown"
-    })
-    
     -- Delete config button
     ConfigSection:AddButton({
-        Name = "Delete Config",
+        Name = "Delete Selected Config",
         Callback = function()
-            local selectedConfig = ConfigDropdown:GetValue()
-            if selectedConfig and selectedConfig ~= "default" then
-                self:DeleteConfig(selectedConfig)
-                ConfigDropdown:Refresh(self:RefreshConfigList())
+            if not self.SelectedConfig or self.SelectedConfig == "" then
+                self:ShowNotification("Please select a config to delete!", Color3.fromRGB(200, 100, 100))
+                return
             end
+            
+            if self.SelectedConfig == "default" then
+                self:ShowNotification("Cannot delete the default config!", Color3.fromRGB(200, 100, 100))
+                return
+            end
+            
+            self:DeleteConfig(self.SelectedConfig)
+            
+            -- Clear selection and refresh
+            self.SelectedConfig = ""
+            ConfigDropdown:Set({})
+            
+            task.wait(0.1)
+            local newList = self:RefreshConfigList()
+            ConfigDropdown:Refresh(newList)
+        end
+    })
+    
+    -- Refresh configs button
+    ConfigSection:AddButton({
+        Name = "Refresh Config List",
+        Callback = function()
+            local newList = self:RefreshConfigList()
+            ConfigDropdown:Refresh(newList)
+            self:ShowNotification("Config list refreshed!", Color3.fromRGB(100, 200, 100))
         end
     })
     
@@ -4073,16 +4197,13 @@ function SaveManager:BuildConfigSection(tab)
         Default = self.ConfigurationSaving.AutoSave,
         Callback = function(value)
             self.ConfigurationSaving.AutoSave = value
+            if value then
+                self:ShowNotification("Auto-save enabled", Color3.fromRGB(100, 200, 100))
+            else
+                self:ShowNotification("Auto-save disabled", Color3.fromRGB(200, 200, 100))
+            end
         end,
         Flag = "auto_save_toggle"
-    })
-    
-    -- Refresh configs button
-    ConfigSection:AddButton({
-        Name = "Refresh List",
-        Callback = function()
-            ConfigDropdown:Refresh(self:RefreshConfigList())
-        end
     })
     
     return ConfigSection
@@ -4090,173 +4211,146 @@ end
 
 -- Save current configuration
 function SaveManager:SaveConfig(configName)
-    if not self.ConfigurationSaving.Enabled then return end
-    if not configName or configName == "" then configName = "default" end
+    if not self.ConfigurationSaving.Enabled then 
+        self:ShowNotification("Configuration saving is disabled!", Color3.fromRGB(200, 100, 100))
+        return 
+    end
+    
+    if not configName or configName == "" then 
+        configName = "default" 
+    end
+    
+    -- Clean the config name
+    configName = configName:gsub("[^%w%-%_]", "")
+    if configName == "" then
+        self:ShowNotification("Invalid config name!", Color3.fromRGB(200, 100, 100))
+        return
+    end
     
     local configTable = {}
     local flagCount = 0
     
-    -- For each registered flag, get its value
+    -- Safely get values from all registered flags
     for flag, element in pairs(Library.Flags) do
-        if element.GetValue then
-            configTable[flag] = element:GetValue()
+        local success, value = pcall(function()
+            if element and element.GetValue then
+                return element:GetValue()
+            end
+            return nil
+        end)
+        
+        if success and value ~= nil then
+            configTable[flag] = value
             flagCount = flagCount + 1
         end
     end
     
     -- Only save if we have flags to save
     if flagCount > 0 then
-        self:SetupFolders()
-        writefile(self.Folder .. "/" .. configName .. ".json", HttpService:JSONEncode(configTable))
-        self:RefreshConfigList()
-        
-        -- Show save confirmation
-        local notification = Create("Frame", {
-            Name = "SaveNotification",
-            Parent = game:GetService("CoreGui"):FindFirstChild("CaelusV3"),
-            BackgroundColor3 = Color3.fromRGB(40, 40, 45),
-            BorderSizePixel = 0,
-            Position = UDim2.new(1, -220, 1, -60),
-            Size = UDim2.new(0, 200, 0, 50),
-            AnchorPoint = Vector2.new(0, 1)
-        })
-        
-        local NotifCorner = Create("UICorner", {
-            CornerRadius = UDim.new(0, 6),
-            Parent = notification
-        })
-        
-        local NotifText = Create("TextLabel", {
-            Name = "Text",
-            Parent = notification,
-            BackgroundTransparency = 1,
-            Position = UDim2.new(0, 10, 0, 0),
-            Size = UDim2.new(1, -20, 1, 0),
-            Font = Enum.Font.Gotham,
-            Text = "Config '" .. configName .. "' saved!",
-            TextColor3 = Color3.fromRGB(255, 255, 255),
-            TextSize = 14
-        })
-        
-        -- Animate notification
-        TweenService:Create(notification, TweenInfo.new(0.5, Enum.EasingStyle.Quint), {Position = UDim2.new(1, -220, 1, -70)}):Play()
-        
-        -- Remove notification after delay
-        task.delay(2, function()
-            TweenService:Create(notification, TweenInfo.new(0.5, Enum.EasingStyle.Quint), {Position = UDim2.new(1, -220, 1, 0)}):Play()
-            task.delay(0.5, function()
-                notification:Destroy()
-            end)
+        local success, error = pcall(function()
+            self:SetupFolders()
+            local jsonData = HttpService:JSONEncode(configTable)
+            writefile(self.Folder .. "/" .. configName .. ".json", jsonData)
         end)
+        
+        if success then
+            self.CurrentConfig = configName
+            self:ShowNotification("Config '" .. configName .. "' saved successfully!", Color3.fromRGB(100, 200, 100))
+        else
+            self:ShowNotification("Failed to save config: " .. tostring(error), Color3.fromRGB(200, 100, 100))
+        end
+    else
+        self:ShowNotification("No settings to save!", Color3.fromRGB(200, 200, 100))
     end
 end
 
 -- Load a saved configuration
 function SaveManager:LoadConfig(configName)
-    if not self.ConfigurationSaving.Enabled then return end
-    if not configName or configName == "" then configName = "default" end
+    if not self.ConfigurationSaving.Enabled then 
+        self:ShowNotification("Configuration loading is disabled!", Color3.fromRGB(200, 100, 100))
+        return 
+    end
     
-    local success, configTable = pcall(function()
-        if isfile(self.Folder .. "/" .. configName .. ".json") then
-            return HttpService:JSONDecode(readfile(self.Folder .. "/" .. configName .. ".json"))
+    if not configName or configName == "" then 
+        configName = "default" 
+    end
+    
+    local success, result = pcall(function()
+        local filePath = self.Folder .. "/" .. configName .. ".json"
+        if not isfile(filePath) then
+            return nil, "Config file not found"
         end
-        return nil
+        
+        local fileContent = readfile(filePath)
+        if not fileContent or fileContent == "" then
+            return nil, "Config file is empty"
+        end
+        
+        return HttpService:JSONDecode(fileContent), nil
     end)
     
-    if success and configTable then
+    if success and result then
+        local configTable = result
+        local loadedCount = 0
+        
+        -- Apply configuration to all matching flags
         for flag, value in pairs(configTable) do
-            if Library.Flags[flag] and Library.Flags[flag].Set then
-                Library.Flags[flag]:Set(value)
+            if Library.Flags[flag] then
+                local loadSuccess = pcall(function()
+                    if Library.Flags[flag].Set then
+                        Library.Flags[flag]:Set(value)
+                        loadedCount = loadedCount + 1
+                    end
+                end)
+                
+                if not loadSuccess then
+                    print("Failed to load flag:", flag)
+                end
             end
         end
         
-        -- Show load confirmation
-        local notification = Create("Frame", {
-            Name = "LoadNotification",
-            Parent = game:GetService("CoreGui"):FindFirstChild("CaelusV3"),
-            BackgroundColor3 = Color3.fromRGB(40, 40, 45),
-            BorderSizePixel = 0,
-            Position = UDim2.new(1, -220, 1, -60),
-            Size = UDim2.new(0, 200, 0, 50),
-            AnchorPoint = Vector2.new(0, 1)
-        })
-        
-        local NotifCorner = Create("UICorner", {
-            CornerRadius = UDim.new(0, 6),
-            Parent = notification
-        })
-        
-        local NotifText = Create("TextLabel", {
-            Name = "Text",
-            Parent = notification,
-            BackgroundTransparency = 1,
-            Position = UDim2.new(0, 10, 0, 0),
-            Size = UDim2.new(1, -20, 1, 0),
-            Font = Enum.Font.Gotham,
-            Text = "Config '" .. configName .. "' loaded!",
-            TextColor3 = Color3.fromRGB(255, 255, 255),
-            TextSize = 14
-        })
-        
-        -- Animate notification
-        TweenService:Create(notification, TweenInfo.new(0.5, Enum.EasingStyle.Quint), {Position = UDim2.new(1, -220, 1, -70)}):Play()
-        
-        -- Remove notification after delay
-        task.delay(2, function()
-            TweenService:Create(notification, TweenInfo.new(0.5, Enum.EasingStyle.Quint), {Position = UDim2.new(1, -220, 1, 0)}):Play()
-            task.delay(0.5, function()
-                notification:Destroy()
-            end)
-        end)
+        if loadedCount > 0 then
+            self.CurrentConfig = configName
+            self:ShowNotification("Config '" .. configName .. "' loaded! (" .. loadedCount .. " settings)", Color3.fromRGB(100, 200, 100))
+        else
+            self:ShowNotification("Config loaded but no settings applied!", Color3.fromRGB(200, 200, 100))
+        end
+    else
+        self:ShowNotification("Failed to load config '" .. configName .. "'!", Color3.fromRGB(200, 100, 100))
     end
 end
 
 -- Delete a configuration
 function SaveManager:DeleteConfig(configName)
-    if not configName or configName == "" then return end
+    if not configName or configName == "" then 
+        self:ShowNotification("Invalid config name!", Color3.fromRGB(200, 100, 100))
+        return 
+    end
     
-    if isfile(self.Folder .. "/" .. configName .. ".json") then
-        delfile(self.Folder .. "/" .. configName .. ".json")
-        self:RefreshConfigList()
-        
-        -- Show delete confirmation
-        local notification = Create("Frame", {
-            Name = "DeleteNotification",
-            Parent = game:GetService("CoreGui"):FindFirstChild("CaelusV3"),
-            BackgroundColor3 = Color3.fromRGB(40, 40, 45),
-            BorderSizePixel = 0,
-            Position = UDim2.new(1, -220, 1, -60),
-            Size = UDim2.new(0, 200, 0, 50),
-            AnchorPoint = Vector2.new(0, 1)
-        })
-        
-        local NotifCorner = Create("UICorner", {
-            CornerRadius = UDim.new(0, 6),
-            Parent = notification
-        })
-        
-        local NotifText = Create("TextLabel", {
-            Name = "Text",
-            Parent = notification,
-            BackgroundTransparency = 1,
-            Position = UDim2.new(0, 10, 0, 0),
-            Size = UDim2.new(1, -20, 1, 0),
-            Font = Enum.Font.Gotham,
-            Text = "Config '" .. configName .. "' deleted!",
-            TextColor3 = Color3.fromRGB(255, 255, 255),
-            TextSize = 14
-        })
-        
-        -- Animate notification
-        TweenService:Create(notification, TweenInfo.new(0.5, Enum.EasingStyle.Quint), {Position = UDim2.new(1, -220, 1, -70)}):Play()
-        
-        -- Remove notification after delay
-        task.delay(2, function()
-            TweenService:Create(notification, TweenInfo.new(0.5, Enum.EasingStyle.Quint), {Position = UDim2.new(1, -220, 1, 0)}):Play()
-            task.delay(0.5, function()
-                notification:Destroy()
-            end)
+    if configName == "default" then
+        self:ShowNotification("Cannot delete the default config!", Color3.fromRGB(200, 100, 100))
+        return
+    end
+    
+    local filePath = self.Folder .. "/" .. configName .. ".json"
+    
+    if isfile(filePath) then
+        local success = pcall(function()
+            delfile(filePath)
         end)
+        
+        if success then
+            self:ShowNotification("Config '" .. configName .. "' deleted successfully!", Color3.fromRGB(100, 200, 100))
+            
+            -- If we deleted the current config, reset to default
+            if self.CurrentConfig == configName then
+                self.CurrentConfig = "default"
+            end
+        else
+            self:ShowNotification("Failed to delete config '" .. configName .. "'!", Color3.fromRGB(200, 100, 100))
+        end
+    else
+        self:ShowNotification("Config '" .. configName .. "' not found!", Color3.fromRGB(200, 200, 100))
     end
 end
 
