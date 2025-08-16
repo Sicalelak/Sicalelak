@@ -1026,7 +1026,7 @@ function Library:CreateWindow()
                                 BackgroundTransparency = 1,
                                 Position = UDim2.new(0, 2, 0, 2),
                                 Size = UDim2.new(1, -4, 1, -4),
-                                Image = "rbxassetid://7072706620",
+                                Image = "rbxassetid://7072706318",
                                 ImageColor3 = Color3.fromRGB(255, 255, 255),
                                 ImageTransparency = selectedItems[item] and 0 or 1,
                                 ZIndex = 6
@@ -2794,7 +2794,7 @@ function Library:CreateWindow()
                                 BackgroundTransparency = 1,
                                 Position = UDim2.new(0, 2, 0, 2),
                                 Size = UDim2.new(1, -4, 1, -4),
-                                Image = "rbxassetid://7072706620",
+                                Image = "rbxassetid://7072706318",
                                 ImageColor3 = Color3.fromRGB(255, 255, 255),
                                 ImageTransparency = selectedItems[item] and 0 or 1,
                                 ZIndex = 6
