@@ -1592,12 +1592,13 @@ function Library:CreateWindow()
                         
                         -- Debounce the save operation
                         if saveDebounceConnection then
-                            saveDebounceConnection:Disconnect()
+                            task.cancel(saveDebounceConnection)
                             saveDebounceConnection = nil
                         end
                         
                         saveDebounceConnection = task.delay(saveDebounceTime, function()
                             if SaveManager.ConfigurationSaving.AutoSave then
+                                -- Auto save logic here if needed
                             end
                             saveDebounceConnection = nil
                         end)
@@ -3169,7 +3170,7 @@ function Library:CreateWindow()
                     
                     -- Track autosave debouncing
                     local saveDebounce = false
-                    local saveDebounceTime = 5 -- Wait time in seconds
+                    local saveDebounceTime = 0.5 -- Wait time in seconds
                     local saveDebounceConnection = nil
 
                     -- Update slider value function
@@ -3186,12 +3187,13 @@ function Library:CreateWindow()
                             
                             -- Debounce the save operation
                             if saveDebounceConnection then
-                                saveDebounceConnection:Disconnect()
+                                task.cancel(saveDebounceConnection)
                                 saveDebounceConnection = nil
                             end
                             
                             saveDebounceConnection = task.delay(saveDebounceTime, function()
                                 if SaveManager.ConfigurationSaving.AutoSave then
+                                    -- Auto save logic here if needed
                                 end
                                 saveDebounceConnection = nil
                             end)
