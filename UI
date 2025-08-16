@@ -98,7 +98,7 @@ function Library:CreateWindow()
         BackgroundTransparency = 1,
         Position = UDim2.new(0, 8, 0, 8),
         Size = UDim2.new(0, 16, 0, 16),
-        Image = "rbxassetid://7072706620", -- Star icon, replace with appropriate asset ID
+        Image = "rbxassetid://4321867308", -- Star icon, replace with appropriate asset ID
         ImageColor3 = Color3.fromRGB(255, 255, 255)
     })
     
@@ -1026,7 +1026,7 @@ function Library:CreateWindow()
                                 BackgroundTransparency = 1,
                                 Position = UDim2.new(0, 2, 0, 2),
                                 Size = UDim2.new(1, -4, 1, -4),
-                                Image = "rbxassetid://7072706318",
+                                Image = "rbxassetid://7072706620",
                                 ImageColor3 = Color3.fromRGB(255, 255, 255),
                                 ImageTransparency = selectedItems[item] and 0 or 1,
                                 ZIndex = 6
@@ -2794,7 +2794,7 @@ function Library:CreateWindow()
                                 BackgroundTransparency = 1,
                                 Position = UDim2.new(0, 2, 0, 2),
                                 Size = UDim2.new(1, -4, 1, -4),
-                                Image = "rbxassetid://7072706318",
+                                Image = "rbxassetid://7072706620",
                                 ImageColor3 = Color3.fromRGB(255, 255, 255),
                                 ImageTransparency = selectedItems[item] and 0 or 1,
                                 ZIndex = 6
