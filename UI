@@ -4357,7 +4357,22 @@ end
 -- Autosave configuration
 function SaveManager:AutoSaveLoop()
     if self.ConfigurationSaving.Enabled and self.ConfigurationSaving.AutoSave then
-        self:SaveConfig(self.CurrentConfig)
+        -- Get the current config name from the input field, fallback to selected config or default
+        local configToSave = self.CurrentConfig
+        
+        -- Check if there's a config name input element and get its value
+        if Library.Flags["config_name_input"] and Library.Flags["config_name_input"].GetValue then
+            local inputValue = Library.Flags["config_name_input"]:GetValue()
+            if inputValue and inputValue ~= "" and not inputValue:match("^%s*$") then
+                -- Clean the name
+                local cleanName = inputValue:gsub("[^%w%-%_]", "")
+                if cleanName ~= "" then
+                    configToSave = cleanName
+                end
+            end
+        end
+        
+        self:SaveConfig(configToSave)
     end
 end
 
