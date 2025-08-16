@@ -538,7 +538,7 @@ function Library:CreateWindow()
                 Size = UDim2.new(0, 10, 0, 10),
                 Image = "rbxassetid://6031094670",
                 ImageColor3 = Color3.fromRGB(255, 255, 255),
-                Rotation = 180
+                Rotation = -90 -- Point down when expanded
             })
             
             local ContentFrame = Create("Frame", {
@@ -571,10 +571,10 @@ function Library:CreateWindow()
                     expanded = not expanded
                     if expanded then
                         ContentFrame.Visible = true
-                        TweenService:Create(DropArrow, TweenInfo.new(0.2), {Rotation = 180}):Play()
+                        TweenService:Create(DropArrow, TweenInfo.new(0.2), {Rotation = -90}):Play()
                     else
                         ContentFrame.Visible = false
-                        TweenService:Create(DropArrow, TweenInfo.new(0.2), {Rotation = 0}):Play()
+                        TweenService:Create(DropArrow, TweenInfo.new(0.2), {Rotation = 90}):Play()
                     end
                 end
             end)
@@ -681,6 +681,7 @@ function Library:CreateWindow()
                     Size = UDim2.new(0, 10, 0, 10),
                     Image = "rbxassetid://6031094670",
                     ImageColor3 = Color3.fromRGB(255, 255, 255),
+                    Rotation = 90, -- Start pointing down when closed
                     ZIndex = 4
                 })
                 
@@ -858,7 +859,7 @@ function Library:CreateWindow()
                         DropdownFrame.ClipsDescendants = false
                         
                         -- Begin animation for visual elements
-                        TweenService:Create(ArrowIcon, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = 180}):Play()
+                        TweenService:Create(ArrowIcon, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = -90}):Play()
                         
                         -- First update parent layout with a small height to start adjusting positions
                         DropContent.Size = UDim2.new(1, 0, 0, 5)
@@ -906,7 +907,7 @@ function Library:CreateWindow()
                         end)
                     else
                         -- Animate closing
-                        TweenService:Create(ArrowIcon, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = 0}):Play()
+                        TweenService:Create(ArrowIcon, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = 90}):Play()
                         
                         -- Update layout during closing animation for smooth transitions
                         spawn(function()
@@ -2331,7 +2332,7 @@ function Library:CreateWindow()
                 Size = UDim2.new(0, 10, 0, 10),
                 Image = "rbxassetid://6031094670",
                 ImageColor3 = Color3.fromRGB(255, 255, 255),
-                Rotation = 180
+                Rotation = -90 -- Point down when expanded
             })
             
             local ContentFrame = Create("Frame", {
@@ -2365,10 +2366,10 @@ function Library:CreateWindow()
                     expanded = not expanded
                     if expanded then
                         ContentFrame.Visible = true
-                        TweenService:Create(DropArrow, TweenInfo.new(0.2), {Rotation = 180}):Play()
+                        TweenService:Create(DropArrow, TweenInfo.new(0.2), {Rotation = -90}):Play()
                     else
                         ContentFrame.Visible = false
-                        TweenService:Create(DropArrow, TweenInfo.new(0.2), {Rotation = 0}):Play()
+                        TweenService:Create(DropArrow, TweenInfo.new(0.2), {Rotation = 90}):Play()
                     end
                     
                     -- Update container positions after toggling
@@ -2482,6 +2483,7 @@ function Library:CreateWindow()
                     Size = UDim2.new(0, 10, 0, 10),
                     Image = "rbxassetid://6031094670",
                     ImageColor3 = Color3.fromRGB(255, 255, 255),
+                    Rotation = 90, -- Start pointing down when closed
                     ZIndex = 4
                 })
                 
@@ -2626,7 +2628,7 @@ function Library:CreateWindow()
                         DropdownFrame.ClipsDescendants = false
                         
                         -- Begin animation for visual elements
-                        TweenService:Create(ArrowIcon, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = 180}):Play()
+                        TweenService:Create(ArrowIcon, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = -90}):Play()
                         
                         -- First update parent layout with a small height to start adjusting positions
                         DropContent.Size = UDim2.new(1, 0, 0, 5)
@@ -2674,7 +2676,7 @@ function Library:CreateWindow()
                         end)
                     else
                         -- Animate closing
-                        TweenService:Create(ArrowIcon, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = 0}):Play()
+                        TweenService:Create(ArrowIcon, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = 90}):Play()
                         
                         -- Update layout during closing animation for smooth transitions
                         spawn(function()
