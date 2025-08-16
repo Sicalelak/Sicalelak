@@ -548,7 +548,7 @@ function Library:CreateWindow()
                 Position = UDim2.new(0, 0, 0, 35),
                 Size = UDim2.new(1, 0, 0, 0),
                 ClipsDescendants = false,
-                AutomaticSize = Enum.AutomaticSize.None -- Changed from Y to None for manual control
+                AutomaticSize = Enum.AutomaticSize.Y
             })
             
             local ContentPadding = Create("UIPadding", {
@@ -572,35 +572,36 @@ function Library:CreateWindow()
             local function CalculateSectionContentHeight()
                 local totalHeight = 0
                 for _, child in pairs(ContentFrame:GetChildren()) do
-                    if child:IsA("Frame") or child:IsA("TextButton") and child.Visible then
+                    if child:IsA("GuiObject") and child.Visible and child.Name ~= "UIPadding" and child.Name ~= "UIListLayout" then
                         totalHeight = totalHeight + child.AbsoluteSize.Y
                     end
                 end
                 
-                -- Add layout padding
+                -- Add padding from UIListLayout
                 if ContentList then
                     local childCount = 0
                     for _, child in pairs(ContentFrame:GetChildren()) do
-                        if child:IsA("Frame") or child:IsA("TextButton") then
+                        if child:IsA("GuiObject") and child.Visible and child.Name ~= "UIPadding" and child.Name ~= "UIListLayout" then
                             childCount = childCount + 1
                         end
                     end
-                    totalHeight = totalHeight + (ContentList.Padding.Offset * math.max(0, childCount - 1))
+                    if childCount > 1 then
+                        totalHeight = totalHeight + ContentList.Padding.Offset * (childCount - 1)
+                    end
                 end
                 
-                -- Add content padding
+                -- Add padding from UIPadding
                 if ContentPadding then
-                    totalHeight = totalHeight + ContentPadding.PaddingTop.Offset + ContentPadding.PaddingBottom.Offset
+                    totalHeight = totalHeight + ContentPadding.PaddingBottom.Offset
                 end
                 
                 return totalHeight
             end
             
-            -- Store original height when first calculated
-            task.spawn(function()
-                task.wait(0.1) -- Wait for content to be created
+            -- Store original height after content is added
+            task.defer(function()
+                task.wait(0.1) -- Wait for content to be added
                 originalContentHeight = CalculateSectionContentHeight()
-                ContentFrame.Size = UDim2.new(1, 0, 0, originalContentHeight)
             end)
             
             SectionTitle.InputBegan:Connect(function(input)
@@ -608,36 +609,49 @@ function Library:CreateWindow()
                     expanded = not expanded
                     
                     if expanded then
-                        -- Expanding - animate from 0 to full height
+                        -- Expanding animation
                         ContentFrame.Visible = true
                         ContentFrame.ClipsDescendants = true
+                        
+                        -- Start with zero height
                         ContentFrame.Size = UDim2.new(1, 0, 0, 0)
                         
-                        -- Calculate current content height
+                        -- Calculate target height
                         local targetHeight = CalculateSectionContentHeight()
-                        if targetHeight > 0 then
-                            originalContentHeight = targetHeight
+                        if targetHeight == 0 then
+                            targetHeight = originalContentHeight
                         end
                         
-                        -- Animate arrow and content
+                        -- Animate arrow
                         TweenService:Create(DropArrow, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = -90}):Play()
                         
+                        -- Animate expansion
                         local expandTween = TweenService:Create(ContentFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                            Size = UDim2.new(1, 0, 0, originalContentHeight)
+                            Size = UDim2.new(1, 0, 0, targetHeight)
                         })
                         
                         expandTween.Completed:Connect(function()
+                            -- Reset to automatic sizing after animation
+                            ContentFrame.Size = UDim2.new(1, 0, 0, 0)
+                            ContentFrame.AutomaticSize = Enum.AutomaticSize.Y
                             ContentFrame.ClipsDescendants = false
                         end)
                         
                         expandTween:Play()
-                    else
-                        -- Collapsing - animate from full height to 0
-                        ContentFrame.ClipsDescendants = true
                         
-                        -- Animate arrow and content
+                    else
+                        -- Collapsing animation
+                        ContentFrame.ClipsDescendants = true
+                        ContentFrame.AutomaticSize = Enum.AutomaticSize.None
+                        
+                        -- Get current height
+                        local currentHeight = ContentFrame.AbsoluteSize.Y
+                        ContentFrame.Size = UDim2.new(1, 0, 0, currentHeight)
+                        
+                        -- Animate arrow
                         TweenService:Create(DropArrow, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = 90}):Play()
                         
+                        -- Animate collapse
                         local collapseTween = TweenService:Create(ContentFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
                             Size = UDim2.new(1, 0, 0, 0)
                         })
