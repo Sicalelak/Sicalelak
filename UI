@@ -1,4 +1,4 @@
--- Caelus V3 UI Library
+-- Nythera V3 UI Library
 -- A comprehensive, customizable UI library for Roblox with multiple component types,
 -- saving functionality, and smooth animations
 
@@ -15,7 +15,7 @@ local Mouse = LocalPlayer:GetMouse()
 
 -- Configuration
 Library.Config = {
-    WindowName = "Caelus V3",
+    WindowName = "Nythera V3",
     Color = Color3.fromRGB(50, 50, 50),
     AccentColor = Color3.fromRGB(70, 130, 240)
 }
@@ -45,19 +45,19 @@ end
 
 -- Main window creation
 function Library:CreateWindow()
-    if game:GetService("CoreGui"):FindFirstChild("CaelusV3") then
-        game:GetService("CoreGui"):FindFirstChild("CaelusV3"):Destroy()
+    if game:GetService("CoreGui"):FindFirstChild("NytheraV3") then
+        game:GetService("CoreGui"):FindFirstChild("NytheraV3"):Destroy()
     end
     
-    local CaelusV3 = Create("ScreenGui", {
-        Name = "CaelusV3",
+    local NytheraV3 = Create("ScreenGui", {
+        Name = "NytheraV3",
         Parent = CoreGui,
         ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     })
     
     local Main = Create("Frame", {
         Name = "Main",
-        Parent = CaelusV3,
+        Parent = NytheraV3,
         BackgroundColor3 = Color3.fromRGB(25, 25, 30),
         BorderSizePixel = 0,
         Position = UDim2.new(0.5, -350, 0.5, -225), -- Centered position for new size (half of width/height)
@@ -3968,7 +3968,7 @@ end
 
 -- Enhanced Save System Implementation
 SaveManager = {}
-SaveManager.Folder = "CaelusV3/Configs"
+SaveManager.Folder = "NytheraV3/Configs"
 SaveManager.ConfigList = {}
 SaveManager.CurrentConfig = "default"
 SaveManager.SelectedConfig = ""
@@ -4029,7 +4029,7 @@ end
 function SaveManager:ShowNotification(message, color)
     color = color or Color3.fromRGB(40, 40, 45)
     
-    local coreGui = game:GetService("CoreGui"):FindFirstChild("CaelusV3")
+    local coreGui = game:GetService("CoreGui"):FindFirstChild("NytheraV3")
     if not coreGui then return end
     
     local notification = Create("Frame", {
@@ -4380,7 +4380,7 @@ end
 local Window = Library:CreateWindow()
 
 -- Initialize the SaveManager
-SaveManager.Folder = "CaelusV3/Configs"
+SaveManager.Folder = "NytheraV3/Configs"
 SaveManager.CurrentConfig = "default"
 SaveManager.ConfigurationSaving = {
     Enabled = true,
@@ -4406,7 +4406,7 @@ end)
 Library.SaveManager = SaveManager
 
 -- Make the library globally accessible for loadstring usage
-getgenv().CaelusV3 = Library
+getgenv().NytheraV3 = Library
 
 -- Return the library object for further use
 return Library
