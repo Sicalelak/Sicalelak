@@ -769,17 +769,18 @@ function Library:CreateWindow()
                             -- Update tab page containing both containers
                             local tabPage = container.Parent
                             if tabPage and tabPage:IsA("ScrollingFrame") then
-                                -- Update canvas size for scrolling
+                                -- Update canvas size for scrolling with EXTRA BOTTOM PADDING
                                 local leftContainer = tabPage:FindFirstChild("LeftContainer")
                                 local rightContainer = tabPage:FindFirstChild("RightContainer")
                                 
                                 if leftContainer and rightContainer then
-                                    local leftHeight = leftContainer.AbsoluteSize.Y
-                                    local rightHeight = rightContainer.AbsoluteSize.Y
+                                    local leftHeight = leftContainer.AbsolutePosition.Y + leftContainer.AbsoluteSize.Y - tabPage.AbsolutePosition.Y
+                                    local rightHeight = rightContainer.AbsolutePosition.Y + rightContainer.AbsoluteSize.Y - tabPage.AbsolutePosition.Y
                                     local maxHeight = math.max(leftHeight, rightHeight)
                                     
-                                    -- Add padding to ensure proper scrolling
-                                    tabPage.CanvasSize = UDim2.new(0, 0, 0, maxHeight + 20)
+                                    -- Add significant extra padding to ensure more space at bottom
+                                    local extraBottomPadding = 100 -- Increase this value for more gap
+                                    tabPage.CanvasSize = UDim2.new(0, 0, 0, maxHeight + extraBottomPadding)
                                 end
                                 
                                 -- Update scroll position to ensure visibility
@@ -789,6 +790,7 @@ function Library:CreateWindow()
                                     
                                     if dropdownBottom > viewportBottom then
                                         local newScroll = tabPage.CanvasPosition.Y + (dropdownBottom - viewportBottom) + 10
+                                        tabPage.CanvasSize = UDim2.new(0, 0, 0, math.max(tabPage.CanvasSize.Y.Offset, newScroll + tabPage.AbsoluteSize.Y + 50))
                                         tabPage.CanvasPosition = Vector2.new(0, math.min(newScroll, tabPage.CanvasSize.Y.Offset - tabPage.AbsoluteSize.Y))
                                     end
                                 end
@@ -2285,12 +2287,14 @@ function Library:CreateWindow()
                 LeftContainer.Position = UDim2.new(0, 10, 0, bigSectionHeight + 20)
                 RightContainer.Position = UDim2.new(0.5, 5, 0, bigSectionHeight + 20)
                 
-                -- Update the TabPage canvas size to accommodate all content
+                -- Update the TabPage canvas size to accommodate all content with extra padding
                 local leftHeight = LeftContainer.AbsolutePosition.Y + LeftContainer.AbsoluteSize.Y
                 local rightHeight = RightContainer.AbsolutePosition.Y + RightContainer.AbsoluteSize.Y
                 local maxHeight = math.max(leftHeight, rightHeight)
                 
-                TabPage.CanvasSize = UDim2.new(0, 0, 0, maxHeight - TabPage.AbsolutePosition.Y + 20)
+                -- Add extra bottom padding here too
+                local extraBottomPadding = 100 -- Adjust this value as needed
+                TabPage.CanvasSize = UDim2.new(0, 0, 0, maxHeight - TabPage.AbsolutePosition.Y + extraBottomPadding)
             end
             
             -- Connect the update function to the size change of the FullWidthContainer
