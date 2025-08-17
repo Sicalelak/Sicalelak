@@ -578,10 +578,10 @@ function Library:CreateWindow()
                     expanded = not expanded
                     if expanded then
                         ContentFrame.Visible = true
-                        TweenService:Create(DropArrow, TweenInfo.new(0.2), {Rotation = -90}):Play()
+                        TweenService:Create(DropArrow, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Rotation = -90}):Play()
                     else
                         ContentFrame.Visible = false
-                        TweenService:Create(DropArrow, TweenInfo.new(0.2), {Rotation = 90}):Play()
+                        TweenService:Create(DropArrow, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Rotation = 90}):Play()
                     end
                 end
             end)
@@ -2380,14 +2380,14 @@ function Library:CreateWindow()
                     expanded = not expanded
                     if expanded then
                         ContentFrame.Visible = true
-                        TweenService:Create(DropArrow, TweenInfo.new(0.2), {Rotation = -90}):Play()
+                        TweenService:Create(DropArrow, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Rotation = -90}):Play()
                     else
                         ContentFrame.Visible = false
-                        TweenService:Create(DropArrow, TweenInfo.new(0.2), {Rotation = 90}):Play()
+                        TweenService:Create(DropArrow, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Rotation = 90}):Play()
                     end
                     
                     -- Update container positions after toggling
-                    wait(0.25) -- Wait for animation to complete
+                    wait(0.45) -- Wait for animation to complete
                     UpdateContainerPositions()
                 end
             end)
