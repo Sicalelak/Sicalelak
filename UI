@@ -769,17 +769,17 @@ function Library:CreateWindow()
                             -- Update tab page containing both containers
                             local tabPage = container.Parent
                             if tabPage and tabPage:IsA("ScrollingFrame") then
-                                -- Update canvas size for scrolling
+                                -- Update canvas size for scrolling with more generous padding
                                 local leftContainer = tabPage:FindFirstChild("LeftContainer")
                                 local rightContainer = tabPage:FindFirstChild("RightContainer")
                                 
                                 if leftContainer and rightContainer then
-                                    local leftHeight = leftContainer.AbsoluteSize.Y
-                                    local rightHeight = rightContainer.AbsoluteSize.Y
+                                    local leftHeight = leftContainer.AbsolutePosition.Y - tabPage.AbsolutePosition.Y + leftContainer.AbsoluteSize.Y
+                                    local rightHeight = rightContainer.AbsolutePosition.Y - tabPage.AbsolutePosition.Y + rightContainer.AbsoluteSize.Y
                                     local maxHeight = math.max(leftHeight, rightHeight)
                                     
-                                    -- Add padding to ensure proper scrolling
-                                    tabPage.CanvasSize = UDim2.new(0, 0, 0, maxHeight + 20)
+                                    -- Add much more generous padding to ensure proper scrolling and spacing
+                                    tabPage.CanvasSize = UDim2.new(0, 0, 0, maxHeight + 100)
                                 end
                                 
                                 -- Update scroll position to ensure visibility
@@ -2281,33 +2281,17 @@ function Library:CreateWindow()
             
             -- Create function to update container positions based on FullWidthContainer size
             local function UpdateContainerPositions()
-                -- Wait for UI to update
-                RunService.Heartbeat:Wait()
-                
                 local bigSectionHeight = FullWidthContainer.AbsoluteSize.Y
                 LeftContainer.Position = UDim2.new(0, 10, 0, bigSectionHeight + 20)
                 RightContainer.Position = UDim2.new(0.5, 5, 0, bigSectionHeight + 20)
                 
-                -- Wait another frame for position updates to take effect
-                RunService.Heartbeat:Wait()
+                -- Update the TabPage canvas size to accommodate all content with generous padding
+                local leftHeight = LeftContainer.AbsolutePosition.Y + LeftContainer.AbsoluteSize.Y
+                local rightHeight = RightContainer.AbsolutePosition.Y + RightContainer.AbsoluteSize.Y
+                local maxHeight = math.max(leftHeight, rightHeight)
                 
-                -- Calculate total content height relative to TabPage
-                local leftBottom = (LeftContainer.AbsolutePosition.Y + LeftContainer.AbsoluteSize.Y) - TabPage.AbsolutePosition.Y
-                local rightBottom = (RightContainer.AbsolutePosition.Y + RightContainer.AbsoluteSize.Y) - TabPage.AbsolutePosition.Y
-                local bigSectionBottom = (FullWidthContainer.AbsolutePosition.Y + FullWidthContainer.AbsoluteSize.Y) - TabPage.AbsolutePosition.Y
-                
-                local totalContentHeight = math.max(leftBottom, rightBottom, bigSectionBottom)
-                
-                -- Debug prints
-                print("Big section height:", bigSectionHeight)
-                print("Left bottom:", leftBottom, "Right bottom:", rightBottom, "Big section bottom:", bigSectionBottom)
-                print("Total content height:", totalContentHeight)
-                
-                -- Set canvas size with adequate padding
-                local finalCanvasHeight = math.max(totalContentHeight + 60, TabPage.AbsoluteSize.Y + 50)
-                TabPage.CanvasSize = UDim2.new(0, 0, 0, finalCanvasHeight)
-                
-                print("Canvas size set to:", finalCanvasHeight)
+                -- Add much more generous bottom padding (150 instead of 20)
+                TabPage.CanvasSize = UDim2.new(0, 0, 0, maxHeight - TabPage.AbsolutePosition.Y + 150)
             end
             
             -- Connect the update function to the size change of the FullWidthContainer
@@ -2594,10 +2578,10 @@ function Library:CreateWindow()
                             contentHeight = contentHeight + ContentPadding.PaddingTop.Offset + ContentPadding.PaddingBottom.Offset
                         end
                         
-                        -- Force update TabPage scrolling
+                        -- Force update TabPage scrolling with generous bottom padding
                         if TabPage and TabPage:IsA("ScrollingFrame") then
-                            -- Recalculate canvas size
-                            TabPage.CanvasSize = UDim2.new(0, 0, 0, SectionFrame.AbsolutePosition.Y - TabPage.AbsolutePosition.Y + SectionFrame.AbsoluteSize.Y + 20)
+                            -- Recalculate canvas size with more padding (100 instead of 20)
+                            TabPage.CanvasSize = UDim2.new(0, 0, 0, SectionFrame.AbsolutePosition.Y - TabPage.AbsolutePosition.Y + SectionFrame.AbsoluteSize.Y + 100)
                         end
                     end
                     
