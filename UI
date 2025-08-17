@@ -521,7 +521,7 @@ function Library:CreateWindow()
                 Parent = SectionFrame,
                 Color = Color3.fromRGB(255, 255, 255),
                 Thickness = 1,
-                Transparency = 0.8
+                Transparency = 0.6
             })
             
             local SectionTitle = Create("TextLabel", {
@@ -2321,7 +2321,7 @@ function Library:CreateWindow()
                 Parent = SectionFrame,
                 Color = Color3.fromRGB(255, 255, 255),
                 Thickness = 1,
-                Transparency = 0.8
+                Transparency = 0.6
             })
             
             local SectionTitle = Create("TextLabel", {
