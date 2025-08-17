@@ -521,7 +521,7 @@ function Library:CreateWindow()
                 Parent = SectionFrame,
                 Color = Color3.fromRGB(255, 255, 255),
                 Thickness = 1,
-                Transparency = 0
+                Transparency = 0.8
             })
             
             local SectionTitle = Create("TextLabel", {
@@ -554,8 +554,8 @@ function Library:CreateWindow()
                 BackgroundTransparency = 1,
                 Position = UDim2.new(0, 0, 0, 35),
                 Size = UDim2.new(1, 0, 0, 0),
-                ClipsDescendants = true,
-                AutomaticSize = Enum.AutomaticSize.None
+                ClipsDescendants = false,
+                AutomaticSize = Enum.AutomaticSize.Y
             })
             
             local ContentPadding = Create("UIPadding", {
@@ -573,66 +573,15 @@ function Library:CreateWindow()
             
             -- Toggle section visibility
             local expanded = true
-            local originalContentHeight = 0
-
-            -- Function to calculate content height
-            local function CalculateSectionContentHeight()
-                local totalHeight = 0
-                for _, child in pairs(ContentFrame:GetChildren()) do
-                    if child:IsA("Frame") or child:IsA("TextButton") then
-                        totalHeight = totalHeight + child.AbsoluteSize.Y
-                    end
-                end
-                
-                -- Add layout padding
-                if ContentList then
-                    local childCount = #ContentFrame:GetChildren() - 1 -- Exclude layout objects
-                    totalHeight = totalHeight + (ContentList.Padding.Offset * math.max(0, childCount - 1))
-                end
-                
-                -- Add container padding
-                if ContentPadding then
-                    totalHeight = totalHeight + ContentPadding.PaddingTop.Offset + ContentPadding.PaddingBottom.Offset
-                end
-                
-                return totalHeight
-            end
-
             SectionTitle.InputBegan:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 then
                     expanded = not expanded
-                    
                     if expanded then
-                        -- Calculate the target height
                         ContentFrame.Visible = true
-                        ContentFrame.Size = UDim2.new(1, 0, 0, 0)
-                        ContentFrame.ClipsDescendants = false
-                        
-                        -- Wait a frame for size calculation
-                        RunService.Heartbeat:Wait()
-                        originalContentHeight = CalculateSectionContentHeight()
-                        
-                        -- Animate arrow and content expansion
-                        TweenService:Create(DropArrow, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = -90}):Play()
-                        
-                        local expandTween = TweenService:Create(ContentFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                            Size = UDim2.new(1, 0, 0, originalContentHeight)
-                        })
-                        
-                        expandTween:Play()
+                        TweenService:Create(DropArrow, TweenInfo.new(0.2), {Rotation = -90}):Play()
                     else
-                        -- Animate arrow and content collapse
-                        TweenService:Create(DropArrow, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = 90}):Play()
-                        
-                        local collapseTween = TweenService:Create(ContentFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                            Size = UDim2.new(1, 0, 0, 0)
-                        })
-                        
-                        collapseTween.Completed:Connect(function()
-                            ContentFrame.Visible = false
-                        end)
-                        
-                        collapseTween:Play()
+                        ContentFrame.Visible = false
+                        TweenService:Create(DropArrow, TweenInfo.new(0.2), {Rotation = 90}):Play()
                     end
                 end
             end)
@@ -2372,7 +2321,7 @@ function Library:CreateWindow()
                 Parent = SectionFrame,
                 Color = Color3.fromRGB(255, 255, 255),
                 Thickness = 1,
-                Transparency = 0
+                Transparency = 0.8
             })
             
             local SectionTitle = Create("TextLabel", {
@@ -2407,7 +2356,7 @@ function Library:CreateWindow()
                 Position = UDim2.new(0, 0, 0, 35),
                 Size = UDim2.new(1, 0, 0, 0),
                 ClipsDescendants = false,
-                AutomaticSize = Enum.AutomaticSize.None
+                AutomaticSize = Enum.AutomaticSize.Y,
                 ZIndex = 4 -- Ensure visibility
             })
             
@@ -2426,74 +2375,20 @@ function Library:CreateWindow()
             
             -- Toggle section visibility
             local expanded = true
-            local originalContentHeight = 0
-
-            -- Function to calculate content height
-            local function CalculateSectionContentHeight()
-                local totalHeight = 0
-                for _, child in pairs(ContentFrame:GetChildren()) do
-                    if child:IsA("Frame") or child:IsA("TextButton") then
-                        totalHeight = totalHeight + child.AbsoluteSize.Y
-                    end
-                end
-                
-                -- Add layout padding
-                if ContentList then
-                    local childCount = #ContentFrame:GetChildren() - 1 -- Exclude layout objects
-                    totalHeight = totalHeight + (ContentList.Padding.Offset * math.max(0, childCount - 1))
-                end
-                
-                -- Add container padding
-                if ContentPadding then
-                    totalHeight = totalHeight + ContentPadding.PaddingTop.Offset + ContentPadding.PaddingBottom.Offset
-                end
-                
-                return totalHeight
-            end
-
             SectionTitle.InputBegan:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 then
                     expanded = not expanded
-                    
                     if expanded then
-                        -- Calculate the target height
                         ContentFrame.Visible = true
-                        ContentFrame.Size = UDim2.new(1, 0, 0, 0)
-                        ContentFrame.ClipsDescendants = false
-                        
-                        -- Wait a frame for size calculation
-                        RunService.Heartbeat:Wait()
-                        originalContentHeight = CalculateSectionContentHeight()
-                        
-                        -- Animate arrow and content expansion
-                        TweenService:Create(DropArrow, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = -90}):Play()
-                        
-                        local expandTween = TweenService:Create(ContentFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                            Size = UDim2.new(1, 0, 0, originalContentHeight)
-                        })
-                        
-                        expandTween.Completed:Connect(function()
-                            -- Update container positions after expansion is complete
-                            UpdateContainerPositions()
-                        end)
-                        
-                        expandTween:Play()
+                        TweenService:Create(DropArrow, TweenInfo.new(0.2), {Rotation = -90}):Play()
                     else
-                        -- Animate arrow and content collapse
-                        TweenService:Create(DropArrow, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = 90}):Play()
-                        
-                        local collapseTween = TweenService:Create(ContentFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                            Size = UDim2.new(1, 0, 0, 0)
-                        })
-                        
-                        collapseTween.Completed:Connect(function()
-                            ContentFrame.Visible = false
-                            -- Update container positions after collapse is complete
-                            UpdateContainerPositions()
-                        end)
-                        
-                        collapseTween:Play()
+                        ContentFrame.Visible = false
+                        TweenService:Create(DropArrow, TweenInfo.new(0.2), {Rotation = 90}):Play()
                     end
+                    
+                    -- Update container positions after toggling
+                    wait(0.25) -- Wait for animation to complete
+                    UpdateContainerPositions()
                 end
             end)
             
