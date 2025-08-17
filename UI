@@ -511,10 +511,17 @@ function Library:CreateWindow()
                 Size = UDim2.new(1, 0, 0, 35),
                 AutomaticSize = Enum.AutomaticSize.Y
             })
-            
+
             local SectionCorner = Create("UICorner", {
                 CornerRadius = UDim.new(0, 6),
                 Parent = SectionFrame
+            })
+
+            local SectionStroke = Create("UIStroke", {
+                Parent = SectionFrame,
+                Color = Color3.fromRGB(255, 255, 255),
+                Thickness = 1,
+                Transparency = 0
             })
             
             local SectionTitle = Create("TextLabel", {
@@ -604,6 +611,7 @@ function Library:CreateWindow()
                     end
                 end
                 
+                -- Main dropdown container (fixed height initially)
                 local DropdownFrame = Create("Frame", {
                     Name = dropName.."Dropdown",
                     Parent = ContentFrame,
@@ -613,16 +621,9 @@ function Library:CreateWindow()
                     ClipsDescendants = false,
                     ZIndex = 2
                 })
-
+                
                 local DropdownCorner = Create("UICorner", {
                     CornerRadius = UDim.new(0, 6),
-                    Parent = DropdownFrame
-                })
-
-                local DropdownStroke = Create("UIStroke", {
-                    Color = Color3.fromRGB(255, 255, 255),
-                    Thickness = 1,
-                    Transparency = 0,
                     Parent = DropdownFrame
                 })
                 
@@ -2310,10 +2311,17 @@ function Library:CreateWindow()
                 AutomaticSize = Enum.AutomaticSize.Y,
                 ZIndex = 3 -- Ensure this is above other content
             })
-            
+
             local SectionCorner = Create("UICorner", {
                 CornerRadius = UDim.new(0, 6),
                 Parent = SectionFrame
+            })
+
+            local SectionStroke = Create("UIStroke", {
+                Parent = SectionFrame,
+                Color = Color3.fromRGB(255, 255, 255),
+                Thickness = 1,
+                Transparency = 0
             })
             
             local SectionTitle = Create("TextLabel", {
@@ -2412,6 +2420,7 @@ function Library:CreateWindow()
                     end
                 end
                 
+                -- Main dropdown container (fixed height initially)
                 local DropdownFrame = Create("Frame", {
                     Name = dropName.."Dropdown",
                     Parent = ContentFrame,
@@ -2421,16 +2430,9 @@ function Library:CreateWindow()
                     ClipsDescendants = false,
                     ZIndex = 2
                 })
-
+                
                 local DropdownCorner = Create("UICorner", {
                     CornerRadius = UDim.new(0, 6),
-                    Parent = DropdownFrame
-                })
-
-                local DropdownStroke = Create("UIStroke", {
-                    Color = Color3.fromRGB(255, 255, 255),
-                    Thickness = 1,
-                    Transparency = 0,
                     Parent = DropdownFrame
                 })
                 
