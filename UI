@@ -1692,6 +1692,325 @@ function Library:CreateWindow()
 
                 return SliderFunctions
             end
+
+            -- Add two-sided range slider
+            function SectionFunctions:AddRangeSlider(options)
+                options = options or {}
+                local sliderName = options.Name or "Range Slider"
+                local min = options.Min or 0
+                local max = options.Max or 100
+                local defaultMin = options.DefaultMin or min
+                local defaultMax = options.DefaultMax or max
+                local callback = options.Callback or function() end
+                local suffix = options.Suffix or ""
+                
+                -- Ensure defaults are within bounds
+                defaultMin = math.clamp(defaultMin, min, max)
+                defaultMax = math.clamp(defaultMax, min, max)
+                if defaultMin > defaultMax then
+                    defaultMin, defaultMax = defaultMax, defaultMin
+                end
+                
+                local SliderFrame = Create("Frame", {
+                    Name = sliderName.."RangeSlider",
+                    Parent = ContentFrame,
+                    BackgroundTransparency = 1,
+                    Size = UDim2.new(1, 0, 0, 60)
+                })
+                
+                local SliderTitle = Create("TextLabel", {
+                    Name = "Title",
+                    Parent = SliderFrame,
+                    BackgroundTransparency = 1,
+                    Position = UDim2.new(0, 0, 0, 0),
+                    Size = UDim2.new(1, 0, 0, 20),
+                    Font = Enum.Font.Gotham,
+                    Text = sliderName,
+                    TextColor3 = Color3.fromRGB(255, 255, 255),
+                    TextSize = 14,
+                    TextXAlignment = Enum.TextXAlignment.Left
+                })
+                
+                local ValueDisplayMin = Create("TextLabel", {
+                    Name = "ValueMin",
+                    Parent = SliderFrame,
+                    BackgroundTransparency = 1,
+                    Position = UDim2.new(0, 0, 0, 20),
+                    Size = UDim2.new(0, 60, 0, 15),
+                    Font = Enum.Font.Gotham,
+                    Text = "Min: " .. tostring(defaultMin) .. suffix,
+                    TextColor3 = Color3.fromRGB(255, 255, 255),
+                    TextSize = 12,
+                    TextXAlignment = Enum.TextXAlignment.Left
+                })
+                
+                local ValueDisplayMax = Create("TextLabel", {
+                    Name = "ValueMax",
+                    Parent = SliderFrame,
+                    BackgroundTransparency = 1,
+                    Position = UDim2.new(1, -60, 0, 20),
+                    Size = UDim2.new(0, 60, 0, 15),
+                    Font = Enum.Font.Gotham,
+                    Text = "Max: " .. tostring(defaultMax) .. suffix,
+                    TextColor3 = Color3.fromRGB(255, 255, 255),
+                    TextSize = 12,
+                    TextXAlignment = Enum.TextXAlignment.Right
+                })
+                
+                local SliderBack = Create("Frame", {
+                    Name = "SliderBack",
+                    Parent = SliderFrame,
+                    BackgroundColor3 = Color3.fromRGB(40, 40, 45),
+                    BorderSizePixel = 0,
+                    Position = UDim2.new(0, 0, 0, 40),
+                    Size = UDim2.new(1, 0, 0, 10)
+                })
+                
+                local SliderBackCorner = Create("UICorner", {
+                    CornerRadius = UDim.new(1, 0),
+                    Parent = SliderBack
+                })
+                
+                -- Range fill (between the two handles)
+                local SliderFill = Create("Frame", {
+                    Name = "SliderFill",
+                    Parent = SliderBack,
+                    BackgroundColor3 = Library.Config.AccentColor,
+                    BorderSizePixel = 0,
+                    Position = UDim2.new((defaultMin - min) / (max - min), 0, 0, 0),
+                    Size = UDim2.new((defaultMax - defaultMin) / (max - min), 0, 1, 0)
+                })
+                
+                local SliderFillCorner = Create("UICorner", {
+                    CornerRadius = UDim.new(1, 0),
+                    Parent = SliderFill
+                })
+                
+                -- Min handle
+                local MinHandle = Create("Frame", {
+                    Name = "MinHandle",
+                    Parent = SliderBack,
+                    BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+                    BorderSizePixel = 0,
+                    Position = UDim2.new((defaultMin - min) / (max - min), -6, 0.5, -8),
+                    Size = UDim2.new(0, 12, 0, 16),
+                    ZIndex = 2
+                })
+                
+                local MinHandleCorner = Create("UICorner", {
+                    CornerRadius = UDim.new(0, 4),
+                    Parent = MinHandle
+                })
+                
+                -- Max handle
+                local MaxHandle = Create("Frame", {
+                    Name = "MaxHandle",
+                    Parent = SliderBack,
+                    BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+                    BorderSizePixel = 0,
+                    Position = UDim2.new((defaultMax - min) / (max - min), -6, 0.5, -8),
+                    Size = UDim2.new(0, 12, 0, 16),
+                    ZIndex = 2
+                })
+                
+                local MaxHandleCorner = Create("UICorner", {
+                    CornerRadius = UDim.new(0, 4),
+                    Parent = MaxHandle
+                })
+                
+                -- Invisible buttons for dragging
+                local MinButton = Create("TextButton", {
+                    Name = "MinButton",
+                    Parent = MinHandle,
+                    BackgroundTransparency = 1,
+                    Size = UDim2.new(1, 0, 1, 0),
+                    Text = "",
+                    ZIndex = 3
+                })
+                
+                local MaxButton = Create("TextButton", {
+                    Name = "MaxButton",
+                    Parent = MaxHandle,
+                    BackgroundTransparency = 1,
+                    Size = UDim2.new(1, 0, 1, 0),
+                    Text = "",
+                    ZIndex = 3
+                })
+                
+                -- Slider functionality
+                local slidingMin = false
+                local slidingMax = false
+                local minValue = defaultMin
+                local maxValue = defaultMax
+                
+                -- Track autosave debouncing
+                local saveDebounceConnection = nil
+                local saveDebounceTime = 0.5
+                
+                -- Update slider values and visuals
+                local function UpdateSlider(newMinValue, newMaxValue, skipCallback)
+                    -- Clamp values
+                    newMinValue = math.clamp(newMinValue or minValue, min, max)
+                    newMaxValue = math.clamp(newMaxValue or maxValue, min, max)
+                    
+                    -- Ensure min <= max
+                    if newMinValue > newMaxValue then
+                        newMinValue, newMaxValue = newMaxValue, newMinValue
+                    end
+                    
+                    minValue = newMinValue
+                    maxValue = newMaxValue
+                    
+                    -- Update visual elements
+                    local minPercent = (minValue - min) / (max - min)
+                    local maxPercent = (maxValue - min) / (max - min)
+                    local rangePercent = maxPercent - minPercent
+                    
+                    -- Update handles
+                    TweenService:Create(MinHandle, TweenInfo.new(0.1), {Position = UDim2.new(minPercent, -6, 0.5, -8)}):Play()
+                    TweenService:Create(MaxHandle, TweenInfo.new(0.1), {Position = UDim2.new(maxPercent, -6, 0.5, -8)}):Play()
+                    
+                    -- Update fill
+                    TweenService:Create(SliderFill, TweenInfo.new(0.1), {
+                        Position = UDim2.new(minPercent, 0, 0, 0),
+                        Size = UDim2.new(rangePercent, 0, 1, 0)
+                    }):Play()
+                    
+                    -- Update text displays
+                    ValueDisplayMin.Text = "Min: " .. tostring(math.floor(minValue * 100) / 100) .. suffix
+                    ValueDisplayMax.Text = "Max: " .. tostring(math.floor(maxValue * 100) / 100) .. suffix
+                    
+                    if not skipCallback then
+                        callback(minValue, maxValue)
+                        
+                        -- Debounce the save operation
+                        if saveDebounceConnection then
+                            task.cancel(saveDebounceConnection)
+                            saveDebounceConnection = nil
+                        end
+                        
+                        saveDebounceConnection = task.delay(saveDebounceTime, function()
+                            if SaveManager.ConfigurationSaving.AutoSave then
+                                -- Auto save logic here if needed
+                            end
+                            saveDebounceConnection = nil
+                        end)
+                    end
+                end
+                
+                -- Min handle dragging
+                MinButton.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        slidingMin = true
+                        
+                        -- Calculate value based on mouse position
+                        local relX = math.clamp((input.Position.X - SliderBack.AbsolutePosition.X) / SliderBack.AbsoluteSize.X, 0, 1)
+                        local newValue = min + (relX * (max - min))
+                        UpdateSlider(newValue, maxValue)
+                    end
+                end)
+                
+                -- Max handle dragging
+                MaxButton.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        slidingMax = true
+                        
+                        -- Calculate value based on mouse position
+                        local relX = math.clamp((input.Position.X - SliderBack.AbsolutePosition.X) / SliderBack.AbsoluteSize.X, 0, 1)
+                        local newValue = min + (relX * (max - min))
+                        UpdateSlider(minValue, newValue)
+                    end
+                end)
+                
+                UserInputService.InputEnded:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        slidingMin = false
+                        slidingMax = false
+                    end
+                end)
+                
+                UserInputService.InputChanged:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseMovement then
+                        if slidingMin then
+                            local relX = math.clamp((input.Position.X - SliderBack.AbsolutePosition.X) / SliderBack.AbsoluteSize.X, 0, 1)
+                            local newValue = min + (relX * (max - min))
+                            UpdateSlider(newValue, maxValue)
+                        elseif slidingMax then
+                            local relX = math.clamp((input.Position.X - SliderBack.AbsolutePosition.X) / SliderBack.AbsoluteSize.X, 0, 1)
+                            local newValue = min + (relX * (max - min))
+                            UpdateSlider(minValue, newValue)
+                        end
+                    end
+                end)
+                
+                -- Handle hover effects
+                MinButton.MouseEnter:Connect(function()
+                    TweenService:Create(MinHandle, TweenInfo.new(0.2), {BackgroundColor3 = Library.Config.AccentColor}):Play()
+                end)
+                
+                MinButton.MouseLeave:Connect(function()
+                    if not slidingMin then
+                        TweenService:Create(MinHandle, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+                    end
+                end)
+                
+                MaxButton.MouseEnter:Connect(function()
+                    TweenService:Create(MaxHandle, TweenInfo.new(0.2), {BackgroundColor3 = Library.Config.AccentColor}):Play()
+                end)
+                
+                MaxButton.MouseLeave:Connect(function()
+                    if not slidingMax then
+                        TweenService:Create(MaxHandle, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+                    end
+                end)
+                
+                -- Initialize slider with default values
+                UpdateSlider(defaultMin, defaultMax, true)
+                
+                -- Range slider functions
+                local RangeSliderFunctions = {}
+                local flag = options.Flag or (options.Name and options.Name:gsub("[^%w]", "_"):lower()) or tostring(tick())
+
+                function RangeSliderFunctions:SetRange(newMin, newMax)
+                    UpdateSlider(newMin, newMax)
+                end
+                
+                function RangeSliderFunctions:SetMin(newMin)
+                    UpdateSlider(newMin, maxValue)
+                end
+                
+                function RangeSliderFunctions:SetMax(newMax)
+                    UpdateSlider(minValue, newMax)
+                end
+
+                function RangeSliderFunctions:GetValue()
+                    return {min = minValue, max = maxValue}
+                end
+                
+                function RangeSliderFunctions:GetMin()
+                    return minValue
+                end
+                
+                function RangeSliderFunctions:GetMax()
+                    return maxValue
+                end
+
+                function RangeSliderFunctions:Set(value)
+                    if type(value) == "table" then
+                        if value.min and value.max then
+                            self:SetRange(value.min, value.max)
+                        elseif value[1] and value[2] then
+                            self:SetRange(value[1], value[2])
+                        end
+                    end
+                    return self
+                end
+
+                -- Register with SaveManager
+                SaveManager:RegisterFlag(flag, RangeSliderFunctions)
+
+                return RangeSliderFunctions
+            end
             
             -- Add input box with number input between text and toggle
             function SectionFunctions:AddInput(options)
@@ -3317,6 +3636,325 @@ function Library:CreateWindow()
                 SaveManager:RegisterFlag(flag, SliderFunctions)
 
                 return SliderFunctions
+            end
+
+            -- Add two-sided range slider for BigSection
+            function SectionFunctions:AddRangeSlider(options)
+                options = options or {}
+                local sliderName = options.Name or "Range Slider"
+                local min = options.Min or 0
+                local max = options.Max or 100
+                local defaultMin = options.DefaultMin or min
+                local defaultMax = options.DefaultMax or max
+                local callback = options.Callback or function() end
+                local suffix = options.Suffix or ""
+                
+                -- Ensure defaults are within bounds
+                defaultMin = math.clamp(defaultMin, min, max)
+                defaultMax = math.clamp(defaultMax, min, max)
+                if defaultMin > defaultMax then
+                    defaultMin, defaultMax = defaultMax, defaultMin
+                end
+                
+                local SliderFrame = Create("Frame", {
+                    Name = sliderName.."RangeSlider",
+                    Parent = ContentFrame,
+                    BackgroundTransparency = 1,
+                    Size = UDim2.new(1, 0, 0, 60)
+                })
+                
+                local SliderTitle = Create("TextLabel", {
+                    Name = "Title",
+                    Parent = SliderFrame,
+                    BackgroundTransparency = 1,
+                    Position = UDim2.new(0, 0, 0, 0),
+                    Size = UDim2.new(1, 0, 0, 20),
+                    Font = Enum.Font.Gotham,
+                    Text = sliderName,
+                    TextColor3 = Color3.fromRGB(255, 255, 255),
+                    TextSize = 14,
+                    TextXAlignment = Enum.TextXAlignment.Left
+                })
+                
+                local ValueDisplayMin = Create("TextLabel", {
+                    Name = "ValueMin",
+                    Parent = SliderFrame,
+                    BackgroundTransparency = 1,
+                    Position = UDim2.new(0, 0, 0, 20),
+                    Size = UDim2.new(0, 60, 0, 15),
+                    Font = Enum.Font.Gotham,
+                    Text = "Min: " .. tostring(defaultMin) .. suffix,
+                    TextColor3 = Color3.fromRGB(255, 255, 255),
+                    TextSize = 12,
+                    TextXAlignment = Enum.TextXAlignment.Left
+                })
+                
+                local ValueDisplayMax = Create("TextLabel", {
+                    Name = "ValueMax",
+                    Parent = SliderFrame,
+                    BackgroundTransparency = 1,
+                    Position = UDim2.new(1, -60, 0, 20),
+                    Size = UDim2.new(0, 60, 0, 15),
+                    Font = Enum.Font.Gotham,
+                    Text = "Max: " .. tostring(defaultMax) .. suffix,
+                    TextColor3 = Color3.fromRGB(255, 255, 255),
+                    TextSize = 12,
+                    TextXAlignment = Enum.TextXAlignment.Right
+                })
+                
+                local SliderBack = Create("Frame", {
+                    Name = "SliderBack",
+                    Parent = SliderFrame,
+                    BackgroundColor3 = Color3.fromRGB(40, 40, 45),
+                    BorderSizePixel = 0,
+                    Position = UDim2.new(0, 0, 0, 40),
+                    Size = UDim2.new(1, 0, 0, 10)
+                })
+                
+                local SliderBackCorner = Create("UICorner", {
+                    CornerRadius = UDim.new(1, 0),
+                    Parent = SliderBack
+                })
+                
+                -- Range fill (between the two handles)
+                local SliderFill = Create("Frame", {
+                    Name = "SliderFill",
+                    Parent = SliderBack,
+                    BackgroundColor3 = Library.Config.AccentColor,
+                    BorderSizePixel = 0,
+                    Position = UDim2.new((defaultMin - min) / (max - min), 0, 0, 0),
+                    Size = UDim2.new((defaultMax - defaultMin) / (max - min), 0, 1, 0)
+                })
+                
+                local SliderFillCorner = Create("UICorner", {
+                    CornerRadius = UDim.new(1, 0),
+                    Parent = SliderFill
+                })
+                
+                -- Min handle
+                local MinHandle = Create("Frame", {
+                    Name = "MinHandle",
+                    Parent = SliderBack,
+                    BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+                    BorderSizePixel = 0,
+                    Position = UDim2.new((defaultMin - min) / (max - min), -6, 0.5, -8),
+                    Size = UDim2.new(0, 12, 0, 16),
+                    ZIndex = 2
+                })
+                
+                local MinHandleCorner = Create("UICorner", {
+                    CornerRadius = UDim.new(0, 4),
+                    Parent = MinHandle
+                })
+                
+                -- Max handle
+                local MaxHandle = Create("Frame", {
+                    Name = "MaxHandle",
+                    Parent = SliderBack,
+                    BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+                    BorderSizePixel = 0,
+                    Position = UDim2.new((defaultMax - min) / (max - min), -6, 0.5, -8),
+                    Size = UDim2.new(0, 12, 0, 16),
+                    ZIndex = 2
+                })
+                
+                local MaxHandleCorner = Create("UICorner", {
+                    CornerRadius = UDim.new(0, 4),
+                    Parent = MaxHandle
+                })
+                
+                -- Invisible buttons for dragging
+                local MinButton = Create("TextButton", {
+                    Name = "MinButton",
+                    Parent = MinHandle,
+                    BackgroundTransparency = 1,
+                    Size = UDim2.new(1, 0, 1, 0),
+                    Text = "",
+                    ZIndex = 3
+                })
+                
+                local MaxButton = Create("TextButton", {
+                    Name = "MaxButton",
+                    Parent = MaxHandle,
+                    BackgroundTransparency = 1,
+                    Size = UDim2.new(1, 0, 1, 0),
+                    Text = "",
+                    ZIndex = 3
+                })
+                
+                -- Slider functionality
+                local slidingMin = false
+                local slidingMax = false
+                local minValue = defaultMin
+                local maxValue = defaultMax
+                
+                -- Track autosave debouncing
+                local saveDebounceConnection = nil
+                local saveDebounceTime = 0.5
+                
+                -- Update slider values and visuals
+                local function UpdateSlider(newMinValue, newMaxValue, skipCallback)
+                    -- Clamp values
+                    newMinValue = math.clamp(newMinValue or minValue, min, max)
+                    newMaxValue = math.clamp(newMaxValue or maxValue, min, max)
+                    
+                    -- Ensure min <= max
+                    if newMinValue > newMaxValue then
+                        newMinValue, newMaxValue = newMaxValue, newMinValue
+                    end
+                    
+                    minValue = newMinValue
+                    maxValue = newMaxValue
+                    
+                    -- Update visual elements
+                    local minPercent = (minValue - min) / (max - min)
+                    local maxPercent = (maxValue - min) / (max - min)
+                    local rangePercent = maxPercent - minPercent
+                    
+                    -- Update handles
+                    TweenService:Create(MinHandle, TweenInfo.new(0.1), {Position = UDim2.new(minPercent, -6, 0.5, -8)}):Play()
+                    TweenService:Create(MaxHandle, TweenInfo.new(0.1), {Position = UDim2.new(maxPercent, -6, 0.5, -8)}):Play()
+                    
+                    -- Update fill
+                    TweenService:Create(SliderFill, TweenInfo.new(0.1), {
+                        Position = UDim2.new(minPercent, 0, 0, 0),
+                        Size = UDim2.new(rangePercent, 0, 1, 0)
+                    }):Play()
+                    
+                    -- Update text displays
+                    ValueDisplayMin.Text = "Min: " .. tostring(math.floor(minValue * 100) / 100) .. suffix
+                    ValueDisplayMax.Text = "Max: " .. tostring(math.floor(maxValue * 100) / 100) .. suffix
+                    
+                    if not skipCallback then
+                        callback(minValue, maxValue)
+                        
+                        -- Debounce the save operation
+                        if saveDebounceConnection then
+                            task.cancel(saveDebounceConnection)
+                            saveDebounceConnection = nil
+                        end
+                        
+                        saveDebounceConnection = task.delay(saveDebounceTime, function()
+                            if SaveManager.ConfigurationSaving.AutoSave then
+                                -- Auto save logic here if needed
+                            end
+                            saveDebounceConnection = nil
+                        end)
+                    end
+                end
+                
+                -- Min handle dragging
+                MinButton.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        slidingMin = true
+                        
+                        -- Calculate value based on mouse position
+                        local relX = math.clamp((input.Position.X - SliderBack.AbsolutePosition.X) / SliderBack.AbsoluteSize.X, 0, 1)
+                        local newValue = min + (relX * (max - min))
+                        UpdateSlider(newValue, maxValue)
+                    end
+                end)
+                
+                -- Max handle dragging
+                MaxButton.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        slidingMax = true
+                        
+                        -- Calculate value based on mouse position
+                        local relX = math.clamp((input.Position.X - SliderBack.AbsolutePosition.X) / SliderBack.AbsoluteSize.X, 0, 1)
+                        local newValue = min + (relX * (max - min))
+                        UpdateSlider(minValue, newValue)
+                    end
+                end)
+                
+                UserInputService.InputEnded:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        slidingMin = false
+                        slidingMax = false
+                    end
+                end)
+                
+                UserInputService.InputChanged:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseMovement then
+                        if slidingMin then
+                            local relX = math.clamp((input.Position.X - SliderBack.AbsolutePosition.X) / SliderBack.AbsoluteSize.X, 0, 1)
+                            local newValue = min + (relX * (max - min))
+                            UpdateSlider(newValue, maxValue)
+                        elseif slidingMax then
+                            local relX = math.clamp((input.Position.X - SliderBack.AbsolutePosition.X) / SliderBack.AbsoluteSize.X, 0, 1)
+                            local newValue = min + (relX * (max - min))
+                            UpdateSlider(minValue, newValue)
+                        end
+                    end
+                end)
+                
+                -- Handle hover effects
+                MinButton.MouseEnter:Connect(function()
+                    TweenService:Create(MinHandle, TweenInfo.new(0.2), {BackgroundColor3 = Library.Config.AccentColor}):Play()
+                end)
+                
+                MinButton.MouseLeave:Connect(function()
+                    if not slidingMin then
+                        TweenService:Create(MinHandle, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+                    end
+                end)
+                
+                MaxButton.MouseEnter:Connect(function()
+                    TweenService:Create(MaxHandle, TweenInfo.new(0.2), {BackgroundColor3 = Library.Config.AccentColor}):Play()
+                end)
+                
+                MaxButton.MouseLeave:Connect(function()
+                    if not slidingMax then
+                        TweenService:Create(MaxHandle, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+                    end
+                end)
+                
+                -- Initialize slider with default values
+                UpdateSlider(defaultMin, defaultMax, true)
+                
+                -- Range slider functions
+                local RangeSliderFunctions = {}
+                local flag = options.Flag or (options.Name and options.Name:gsub("[^%w]", "_"):lower()) or tostring(tick())
+
+                function RangeSliderFunctions:SetRange(newMin, newMax)
+                    UpdateSlider(newMin, newMax)
+                end
+                
+                function RangeSliderFunctions:SetMin(newMin)
+                    UpdateSlider(newMin, maxValue)
+                end
+                
+                function RangeSliderFunctions:SetMax(newMax)
+                    UpdateSlider(minValue, newMax)
+                end
+
+                function RangeSliderFunctions:GetValue()
+                    return {min = minValue, max = maxValue}
+                end
+                
+                function RangeSliderFunctions:GetMin()
+                    return minValue
+                end
+                
+                function RangeSliderFunctions:GetMax()
+                    return maxValue
+                end
+
+                function RangeSliderFunctions:Set(value)
+                    if type(value) == "table" then
+                        if value.min and value.max then
+                            self:SetRange(value.min, value.max)
+                        elseif value[1] and value[2] then
+                            self:SetRange(value[1], value[2])
+                        end
+                    end
+                    return self
+                end
+
+                -- Register with SaveManager
+                SaveManager:RegisterFlag(flag, RangeSliderFunctions)
+
+                return RangeSliderFunctions
             end
             
             -- Button function
