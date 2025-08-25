@@ -270,53 +270,6 @@ function Library:CreateWindow()
         Text = "",
         ZIndex = 10
     })
-
-    -- Minimize/Maximize functionality
-    local isMinimized = false
-    local originalSize = Main.Size
-    local minimizedHeight = 30 -- Only show the top bar when minimized
-    
-    -- Function to toggle minimize/maximize
-    local function ToggleMinimize()
-        isMinimized = not isMinimized
-        
-        if isMinimized then
-            -- Store original size before minimizing
-            originalSize = Main.Size
-            
-            -- Minimize animation
-            TweenService:Create(Main, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-                Size = UDim2.new(originalSize.X.Scale, originalSize.X.Offset, 0, minimizedHeight)
-            }):Play()
-            
-            -- Hide all content except top bar
-            Sidebar.Visible = false
-            ContentContainer.Visible = false
-            ResizeHandle.Visible = false -- Hide resize handle and its dots
-            
-            -- Update minimize button text
-            MinimizeButton.Text = "+"
-            
-        else
-            -- Maximize animation
-            TweenService:Create(Main, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-                Size = originalSize
-            }):Play()
-            
-            -- Show all content after animation starts
-            task.wait(0.1)
-            Sidebar.Visible = true
-            ContentContainer.Visible = true
-            ResizeHandle.Visible = true -- Show resize handle and its dots again
-            
-            -- Update minimize button text
-            MinimizeButton.Text = "-"
-        end
-    end
-    
-    -- Connect minimize button
-    MinimizeButton.MouseButton1Click:Connect(ToggleMinimize)
-    MinimizeButton.TouchTap:Connect(ToggleMinimize)
     
     -- Minimize button hover effects
     MinimizeButton.MouseEnter:Connect(function()
@@ -466,7 +419,54 @@ function Library:CreateWindow()
         PaddingTop = UDim.new(0, 10)
     })
 
- -- User profile section at the top of sidebar
+    -- Minimize/Maximize functionality
+    local isMinimized = false
+    local originalSize = Main.Size
+    local minimizedHeight = 30 -- Only show the top bar when minimized
+    
+    -- Function to toggle minimize/maximize
+    local function ToggleMinimize()
+        isMinimized = not isMinimized
+        
+        if isMinimized then
+            -- Store original size before minimizing
+            originalSize = Main.Size
+            
+            -- Minimize animation
+            TweenService:Create(Main, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+                Size = UDim2.new(originalSize.X.Scale, originalSize.X.Offset, 0, minimizedHeight)
+            }):Play()
+            
+            -- Hide all content except top bar
+            Sidebar.Visible = false
+            ContentContainer.Visible = false
+            ResizeHandle.Visible = false -- Hide resize handle and its dots
+            
+            -- Update minimize button text
+            MinimizeButton.Text = "+"
+            
+        else
+            -- Maximize animation
+            TweenService:Create(Main, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+                Size = originalSize
+            }):Play()
+            
+            -- Show all content after animation starts
+            task.wait(0.1)
+            Sidebar.Visible = true
+            ContentContainer.Visible = true
+            ResizeHandle.Visible = true -- Show resize handle and its dots again
+            
+            -- Update minimize button text
+            MinimizeButton.Text = "-"
+        end
+    end
+    
+    -- Connect minimize button
+    MinimizeButton.MouseButton1Click:Connect(ToggleMinimize)
+    MinimizeButton.TouchTap:Connect(ToggleMinimize)
+
+    -- User profile section at the top of sidebar
     local UserProfile = Create("Frame", {
         Name = "UserProfile",
         Parent = Sidebar,
