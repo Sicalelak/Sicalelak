@@ -4252,20 +4252,6 @@ function Library:CreateWindow()
     return WindowObject
 end
 
--- Cleanup function to remove mobile button when main UI is destroyed
-local function CleanupMobileButton()
-    if CoreGui:FindFirstChild("NytheraV3_MobileButton") then
-        CoreGui:FindFirstChild("NytheraV3_MobileButton"):Destroy()
-    end
-end
-
--- Connect cleanup to main UI destruction
-NytheraV3.AncestryChanged:Connect(function()
-    if not NytheraV3.Parent then
-        CleanupMobileButton()
-    end
-end)
-
 -- Enhanced Save System Implementation
 SaveManager = {}
 SaveManager.Folder = "NytheraV3/Configs"
