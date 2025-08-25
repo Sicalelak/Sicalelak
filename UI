@@ -49,6 +49,11 @@ function Library:CreateWindow()
         game:GetService("CoreGui"):FindFirstChild("NytheraV3"):Destroy()
     end
     
+    -- Also cleanup any existing mobile button
+    if game:GetService("CoreGui"):FindFirstChild("NytheraV3_MobileButton") then
+        game:GetService("CoreGui"):FindFirstChild("NytheraV3_MobileButton"):Destroy()
+    end
+    
     local NytheraV3 = Create("ScreenGui", {
         Name = "NytheraV3",
         Parent = CoreGui,
@@ -151,10 +156,18 @@ function Library:CreateWindow()
         TextTruncate = Enum.TextTruncate.AtEnd
     })
 
+    -- Create a separate ScreenGui for the mobile close button so it stays visible when main UI is disabled
+    local MobileButtonGui = Create("ScreenGui", {
+        Name = "NytheraV3_MobileButton",
+        Parent = CoreGui,
+        ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+        ResetOnSpawn = false
+    })
+    
     -- Mobile close button (separate from main UI)
     local MobileCloseButton = Create("TextButton", {
         Name = "MobileCloseButton",
-        Parent = NytheraV3,
+        Parent = MobileButtonGui,
         BackgroundColor3 = Color3.fromRGB(40, 40, 45),
         BorderSizePixel = 0,
         Position = UDim2.new(0, 20, 0, 20),
@@ -183,6 +196,9 @@ function Library:CreateWindow()
         ZIndex = 16
     })
     
+    -- Track UI state for mobile button functionality
+    local isUIVisible = true
+    
     -- Make mobile button draggable
     local mobileButtonDragging = false
     local mobileDragStart
@@ -200,9 +216,21 @@ function Library:CreateWindow()
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             if mobileButtonDragging and mobileDragStart then
                 local dragDistance = (input.Position - mobileDragStart).Magnitude
-                if dragDistance < 10 then -- Only close if it wasn't dragged much
-                    -- Close the entire UI
-                    NytheraV3.Enabled = false
+                if dragDistance < 10 then -- Only toggle if it wasn't dragged much
+                    -- Toggle the entire UI
+                    isUIVisible = not isUIVisible
+                    NytheraV3.Enabled = isUIVisible
+                    
+                    -- Update button appearance based on UI state
+                    if isUIVisible then
+                        -- UI is now visible - show close icon
+                        MobileCloseIcon.ImageColor3 = Color3.fromRGB(255, 100, 100)
+                        MobileCloseButton.BackgroundColor3 = Color3.fromRGB(60, 40, 40)
+                    else
+                        -- UI is now hidden - show open icon
+                        MobileCloseIcon.ImageColor3 = Color3.fromRGB(100, 255, 100)
+                        MobileCloseButton.BackgroundColor3 = Color3.fromRGB(40, 60, 40)
+                    end
                 end
             end
             mobileButtonDragging = false
@@ -218,13 +246,19 @@ function Library:CreateWindow()
     
     -- Mobile button hover effects
     MobileCloseButton.MouseEnter:Connect(function()
-        TweenService:Create(MobileCloseButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(60, 60, 65)}):Play()
-        TweenService:Create(MobileCloseIcon, TweenInfo.new(0.2), {ImageColor3 = Color3.fromRGB(255, 100, 100)}):Play()
+        if isUIVisible then
+            TweenService:Create(MobileCloseButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(80, 60, 60)}):Play()
+        else
+            TweenService:Create(MobileCloseButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(60, 80, 60)}):Play()
+        end
     end)
     
     MobileCloseButton.MouseLeave:Connect(function()
-        TweenService:Create(MobileCloseButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40, 40, 45)}):Play()
-        TweenService:Create(MobileCloseIcon, TweenInfo.new(0.2), {ImageColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+        if isUIVisible then
+            TweenService:Create(MobileCloseButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(60, 40, 40)}):Play()
+        else
+            TweenService:Create(MobileCloseButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40, 60, 40)}):Play()
+        end
     end)
     
     local ResizeHandle = Create("TextButton", {
@@ -258,13 +292,10 @@ function Library:CreateWindow()
             -- Hide all content except top bar
             Sidebar.Visible = false
             ContentContainer.Visible = false
-            ResizeHandle.Visible = false
+            ResizeHandle.Visible = false -- Hide resize handle and its dots
             
-            -- Update minimize button
+            -- Update minimize button text
             MinimizeButton.Text = "+"
-            
-            -- Hide mobile button when minimized
-            MobileCloseButton.Visible = false
             
         else
             -- Maximize animation
@@ -276,13 +307,10 @@ function Library:CreateWindow()
             task.wait(0.1)
             Sidebar.Visible = true
             ContentContainer.Visible = true
-            ResizeHandle.Visible = true
+            ResizeHandle.Visible = true -- Show resize handle and its dots again
             
-            -- Update minimize button
+            -- Update minimize button text
             MinimizeButton.Text = "-"
-            
-            -- Show mobile button when maximized
-            MobileCloseButton.Visible = true
         end
     end
     
@@ -438,7 +466,7 @@ function Library:CreateWindow()
         PaddingTop = UDim.new(0, 10)
     })
 
--- User profile section at the top of sidebar
+ -- User profile section at the top of sidebar
     local UserProfile = Create("Frame", {
         Name = "UserProfile",
         Parent = Sidebar,
@@ -4223,6 +4251,20 @@ function Library:CreateWindow()
     
     return WindowObject
 end
+
+-- Cleanup function to remove mobile button when main UI is destroyed
+local function CleanupMobileButton()
+    if CoreGui:FindFirstChild("NytheraV3_MobileButton") then
+        CoreGui:FindFirstChild("NytheraV3_MobileButton"):Destroy()
+    end
+end
+
+-- Connect cleanup to main UI destruction
+NytheraV3.AncestryChanged:Connect(function()
+    if not NytheraV3.Parent then
+        CleanupMobileButton()
+    end
+end)
 
 -- Enhanced Save System Implementation
 SaveManager = {}
