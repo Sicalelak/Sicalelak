@@ -108,7 +108,7 @@ local NotificationColors = {
         Background = Color3.fromRGB(45, 40, 25),
         Border = Color3.fromRGB(120, 100, 40),
         Text = Color3.fromRGB(255, 200, 100),
-        Icon = "rbxassetid://7926393909"
+        Icon = "rbxassetid://11648237431"
     },
     Success = {
         Background = Color3.fromRGB(30, 45, 35),
