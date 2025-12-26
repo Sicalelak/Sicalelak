@@ -13,7 +13,7 @@ if not success or not Library then
 end
 
 if not Library or not Library.Config then
-    error('Library loaded but Config is missing check your library code')
+    error('Library loaded but Config is missing - check your library code')
     return
 end
 
@@ -21,102 +21,154 @@ Library.Config.AccentColor = Color3.fromRGB(255, 85, 85)
 
 local Window = Library:CreateWindow()
 
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local game = game
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
-
-local ArmData
-local ArmGameLogic
-local Config
 
 local botEnabled = false
 local autoClickConnection
-local modulesLoaded = false
+local gameActive = false
+local Config
 
-local function initializeModules()
-    local success, err = pcall(function()
-        local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
-        if not playerGui then return end
-        
+local function getAbsoluteValue(num)
+    if num < 0 then
+        return -num
+    end
+    return num
+end
+
+local function loadConfig()
+    local success = pcall(function()
+        Config = require(ReplicatedStorage.Config.Planning.Config).ChristmasArmWrestlConfig
+    end)
+    return success and Config ~= nil
+end
+
+local function findAndMonitorUI()
+    spawn(function()
+        while true do
+            wait(0.5)
+            
+            local success = pcall(function()
+                local playerGui = LocalPlayer.PlayerGui
+                local main = playerGui:FindFirstChild("Main")
+                if not main then return end
+                
+                local func = main:FindFirstChild("Func")
+                if not func then return end
+                
+                local armwrestling = func:FindFirstChild("Armwrestling")
+                if not armwrestling then 
+                    gameActive = false
+                    return 
+                end
+                
+                local bar = armwrestling:FindFirstChild("Bar")
+                if not bar then return end
+                
+                local judgmentline = bar:FindFirstChild("Judgmentline")
+                local successArea = bar:FindFirstChild("SuccessArea")
+                
+                if judgmentline and successArea then
+                    if not gameActive then
+                        gameActive = true
+                    end
+                end
+            end)
+        end
+    end)
+end
+
+local function getUIPositions()
+    local positions = {}
+    
+    pcall(function()
+        local playerGui = LocalPlayer.PlayerGui
         local main = playerGui:FindFirstChild("Main")
         if not main then return end
         
         local func = main:FindFirstChild("Func")
         if not func then return end
         
-        local armwrestlingFolder = func:FindFirstChild("Armwrestling")
-        if not armwrestlingFolder then return end
+        local armwrestling = func:FindFirstChild("Armwrestling")
+        if not armwrestling then return end
         
-        local armwrestlingScript = armwrestlingFolder:FindFirstChild("Armwrestling")
-        if not armwrestlingScript then return end
+        local bar = armwrestling:FindFirstChild("Bar")
+        if not bar then return end
         
-        local armDataModule = armwrestlingScript:FindFirstChild("ArmData")
-        if armDataModule then
-            ArmData = require(armDataModule)
-        else
-            return
+        local judgmentline = bar:FindFirstChild("Judgmentline")
+        local successArea = bar:FindFirstChild("SuccessArea")
+        
+        if judgmentline and successArea then
+            positions.judgmentlineX = judgmentline.Position.X.Scale
+            
+            local successChildren = {}
+            for _, child in pairs(successArea:GetChildren()) do
+                if child:IsA("Frame") and child.Visible then
+                    local childPos = child.Position.X.Scale
+                    local childSize = child.Size.X.Scale
+                    table.insert(successChildren, {
+                        pos = childPos,
+                        size = childSize,
+                        left = childPos - childSize / 2,
+                        right = childPos + childSize / 2,
+                        center = childPos
+                    })
+                end
+            end
+            
+            if #successChildren > 0 then
+                table.sort(successChildren, function(a, b) return a.pos < b.pos end)
+                local middleIndex = 1
+                if #successChildren % 2 == 0 then
+                    middleIndex = #successChildren / 2
+                else
+                    middleIndex = (#successChildren + 1) / 2
+                end
+                
+                positions.targetX = successChildren[middleIndex].center
+                positions.tolerance = successChildren[middleIndex].size / 2
+                positions.valid = true
+            end
         end
-        
-        local armLogicModule = armwrestlingScript:FindFirstChild("ArmGameClientLogic")
-        if armLogicModule then
-            ArmGameLogic = require(armLogicModule)
-        else
-            return
-        end
-        
-        Config = require(ReplicatedStorage.Config.Planning.Config).ChristmasArmWrestlConfig
-        
-        modulesLoaded = true
     end)
     
-    return modulesLoaded
+    return positions
 end
 
 local function calculatePerfectTiming()
-    if not modulesLoaded or not ArmData then 
-        return false 
+    if not gameActive then
+        return false
     end
     
-    local success, result = pcall(function()
-        local spawnPos = ArmData.spawnPos.Value
-        local curLevel = ArmData.curLevel.Value
-        local judgmentlineX = ArmData.judgmentlineX.Value
-        local roundState = ArmData.roundState.Value
-        local roundInputed = ArmData.roundInputed.Value
-        
-        if roundState ~= "Game" or roundInputed then
-            return false
-        end
-        
-        local targetPos
-        local blockSize = Config.blockSize
-        
-        if curLevel < 6 then
-            local totalBlocks = (6 - curLevel) * 2 - 1
-            local middleBlockIndex = math.ceil(totalBlocks / 2)
-            targetPos = spawnPos - (totalBlocks - middleBlockIndex) * blockSize
-        else
-            targetPos = spawnPos
-        end
-        
-        local tolerance = curLevel < 6 and (blockSize / 2) or 0.05
-        local distance = math.abs(judgmentlineX - targetPos)
-        
-        if distance < tolerance * 0.3 then
-            return true
-        end
-        
-        return false
-    end)
+    local positions = getUIPositions()
     
-    return success and result or false
+    if not positions.valid then
+        return false
+    end
+    
+    local distance = getAbsoluteValue(positions.judgmentlineX - positions.targetX)
+    
+    if distance < positions.tolerance * 0.3 then
+        return true
+    end
+    
+    return false
 end
 
 local function triggerInput()
-    if ArmGameLogic and ArmGameLogic.OnInput then
+    local success = pcall(function()
+        local VirtualInputManager = game:GetService("VirtualInputManager")
+        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+        wait(0.05)
+        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+    end)
+    
+    if not success then
         pcall(function()
-            ArmGameLogic.OnInput()
+            mouse1click()
         end)
     end
 end
@@ -124,10 +176,13 @@ end
 local function startAutoClick()
     if autoClickConnection then
         autoClickConnection:Disconnect()
+        autoClickConnection = nil
     end
     
     autoClickConnection = RunService.Heartbeat:Connect(function()
-        if not botEnabled then return end
+        if not botEnabled then 
+            return 
+        end
         
         if calculatePerfectTiming() then
             triggerInput()
@@ -152,8 +207,8 @@ BotSection:AddToggle({
         botEnabled = value
         
         if botEnabled then
-            if not modulesLoaded then
-                initializeModules()
+            if not Config then
+                loadConfig()
             end
             
             startAutoClick()
@@ -164,12 +219,5 @@ BotSection:AddToggle({
     Flag = 'bot_enabled',
 })
 
-task.spawn(function()
-    while task.wait(2) do
-        if not modulesLoaded then
-            initializeModules()
-        else
-            break
-        end
-    end
-end)
+loadConfig()
+findAndMonitorUI()
