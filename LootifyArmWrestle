@@ -1,0 +1,179 @@
+-- Auto Arm Wrestling Perfect Bot with Nythera V3 UI
+local Library
+local success, err = pcall(function()
+    Library = loadstring(
+        game:HttpGet(
+            'https://raw.githubusercontent.com/Sicalelak/Sicalelak/refs/heads/main/NytheraRevampUI'
+        )
+    )()
+end)
+
+if not success or not Library then
+    error('Failed to load Nythera V3 Library: ' .. (err or 'Unknown error'))
+    return
+end
+
+if not Library or not Library.Config then
+    error('Library loaded but Config is missing - check your library code')
+    return
+end
+
+Library.Config.AccentColor = Color3.fromRGB(255, 85, 85)
+
+local Window = Library:CreateWindow()
+
+--============================================--
+--     ARM WRESTLING BOT                     --
+--============================================--
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+local ArmData
+local ArmGameLogic
+local Config
+
+local botEnabled = false
+local autoClickConnection
+local modulesLoaded = false
+
+local function initializeModules()
+    local success, err = pcall(function()
+        local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
+        if not playerGui then return end
+        
+        local main = playerGui:FindFirstChild("Main")
+        if not main then return end
+        
+        local func = main:FindFirstChild("Func")
+        if not func then return end
+        
+        local armwrestlingFolder = func:FindFirstChild("Armwrestling")
+        if not armwrestlingFolder then return end
+        
+        local armwrestlingScript = armwrestlingFolder:FindFirstChild("Armwrestling")
+        if not armwrestlingScript then return end
+        
+        local armDataModule = armwrestlingScript:FindFirstChild("ArmData")
+        if armDataModule then
+            ArmData = require(armDataModule)
+        else
+            return
+        end
+        
+        local armLogicModule = armwrestlingScript:FindFirstChild("ArmGameClientLogic")
+        if armLogicModule then
+            ArmGameLogic = require(armLogicModule)
+        else
+            return
+        end
+        
+        Config = require(ReplicatedStorage.Config.Planning.Config).ChristmasArmWrestlConfig
+        
+        modulesLoaded = true
+    end)
+    
+    return modulesLoaded
+end
+
+local function calculatePerfectTiming()
+    if not modulesLoaded or not ArmData then 
+        return false 
+    end
+    
+    local success, result = pcall(function()
+        local spawnPos = ArmData.spawnPos.Value
+        local curLevel = ArmData.curLevel.Value
+        local judgmentlineX = ArmData.judgmentlineX.Value
+        local roundState = ArmData.roundState.Value
+        local roundInputed = ArmData.roundInputed.Value
+        
+        if roundState ~= "Game" or roundInputed then
+            return false
+        end
+        
+        local targetPos
+        local blockSize = Config.blockSize
+        
+        if curLevel < 6 then
+            local totalBlocks = (6 - curLevel) * 2 - 1
+            local middleBlockIndex = math.ceil(totalBlocks / 2)
+            targetPos = spawnPos - (totalBlocks - middleBlockIndex) * blockSize
+        else
+            targetPos = spawnPos
+        end
+        
+        local tolerance = curLevel < 6 and (blockSize / 2) or 0.05
+        local distance = math.abs(judgmentlineX - targetPos)
+        
+        if distance < tolerance * 0.3 then
+            return true
+        end
+        
+        return false
+    end)
+    
+    return success and result or false
+end
+
+local function triggerInput()
+    if ArmGameLogic and ArmGameLogic.OnInput then
+        pcall(function()
+            ArmGameLogic.OnInput()
+        end)
+    end
+end
+
+local function startAutoClick()
+    if autoClickConnection then
+        autoClickConnection:Disconnect()
+    end
+    
+    autoClickConnection = RunService.Heartbeat:Connect(function()
+        if not botEnabled then return end
+        
+        if calculatePerfectTiming() then
+            triggerInput()
+        end
+    end)
+end
+
+local function stopAutoClick()
+    if autoClickConnection then
+        autoClickConnection:Disconnect()
+        autoClickConnection = nil
+    end
+end
+
+local MainTab = Window:CreateTab('Arm Wrestling Bot', 'rbxassetid://7072706620')
+local BotSection = MainTab:AddSection('Bot Control', 'left')
+
+BotSection:AddToggle({
+    Name = 'Enable Auto Perfect',
+    Default = false,
+    Callback = function(value)
+        botEnabled = value
+        
+        if botEnabled then
+            if not modulesLoaded then
+                initializeModules()
+            end
+            
+            startAutoClick()
+        else
+            stopAutoClick()
+        end
+    end,
+    Flag = 'bot_enabled',
+})
+
+task.spawn(function()
+    while task.wait(2) do
+        if not modulesLoaded then
+            initializeModules()
+        else
+            break
+        end
+    end
+end)
